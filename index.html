@@ -631,7 +631,7 @@ function connectWS(url) {
     wsConnected = true;
     updateWsStatus(true);
     // Auto-rejoin if we were in a room
-    if (roomId && myId) {
+    if (roomId && myId && gs) {
       wsSend({ type: 'join', roomId, playerId: myId });
       toast('已重新连接');
     }
@@ -668,6 +668,11 @@ function connectWS(url) {
   };
 
   ws.onerror = () => { ws.close(); };
+}
+
+function stopReconnect() {
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
 }
 
 function wsSend(msg) {
@@ -1104,7 +1109,9 @@ document.getElementById('startBtn').onclick = () => {
   if (!gs || gs.players.length < 2) return; startNewRound(gs);
 };
 document.getElementById('leaveBtn').onclick = () => {
-  roomId = ''; myId = ''; isHost = false; gs = null; show('homeScreen');
+  stopReconnect();
+  roomId = ''; myId = ''; isHost = false; gs = null;
+  show('homeScreen');
 };
 
 // ══════════════════════════════════
@@ -1339,7 +1346,7 @@ function makePeekCard(frontCard, lg, withDeal, dealDelay) {
   const cardH = lg ? 80 : 62;
   const wrap = document.createElement('div');
   wrap.className = 'peek-wrap' + (lg ? '' : ' peek-wrap-sm');
-  wrap.style.cssText = `width:${cardW}px;height:${cardH}px;position:relative;display:inline-block;flex-shrink:0;`;
+  wrap.style.cssText = `width:${cardW}px;height:${cardH}px;position:relative;display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;`;
 
   // front card sits at position 0,0
   const frontEl = document.createElement('div');
@@ -1443,10 +1450,8 @@ function renderGame(s, withDeal) {
     }
     const myCards = (myP?.hand || []).filter(c => c !== null);
     // Only re-render hand when card count changes or on deal anim
-    const prevCount = parseInt(myHandEl.dataset.cardCount || '0');
     const nowCount = myCards.length;
-    if (withDeal || nowCount !== prevCount) {
-      myHandEl.dataset.cardCount = nowCount;
+    if (true) {  // always re-render to avoid stale state
       myHandEl.innerHTML = '';
       if (myCards.length === 0) {
         myHandEl.innerHTML = '<span style="opacity:.3;font-size:12px;">等待发牌...</span>';
@@ -1733,13 +1738,21 @@ function addChips(amount) {
   p.chips += amount; s.ts = Date.now(); gs = s; wsPushState(s); toast(`+${amount}筹码已到账`);
 }
 window.addChips = addChips;
-document.getElementById('exitBtn').onclick = () => { show('homeScreen'); };
+document.getElementById('exitBtn').onclick = () => {
+  // Clear room state so they can start fresh
+  stopReconnect();
+  roomId = ''; myId = ''; isHost = false; gs = null;
+  show('homeScreen');
+};
 
 // ══════════════════════════════════
 //  STATE CHANGE
 // ══════════════════════════════════
 function onStateChange(s) {
   if (!s || s.ts < (gs?.ts || 0)) return;
+  // Debug: log my hand on every state change
+  const me = s.players?.find(p => p.id === myId);
+  if (me) console.log('[hand]', JSON.stringify(me.hand));
   gs = s;
   const cur = document.querySelector('.screen.active')?.id;
   if (s.phase === 'lobby' && cur !== 'gameScreen') {
