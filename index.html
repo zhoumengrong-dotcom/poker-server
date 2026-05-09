@@ -641,7 +641,7 @@ function connectWS(url) {
         pingTs = Date.now();
         wsSend({ type: 'ping', ts: pingTs });
       }
-    }, 5000);
+    }, 15000); // ping every 15s to keep Railway connection alive
   };
 
   ws.onmessage = (e) => {
@@ -661,9 +661,12 @@ function connectWS(url) {
     wsConnected = false;
     updateWsStatus(false);
     clearInterval(pingInterval);
-    // Auto-reconnect
+    // Auto-reconnect every 2s
     if (WS_URL) {
-      reconnectTimer = setTimeout(() => connectWS(WS_URL), 3000);
+      reconnectTimer = setTimeout(() => {
+        console.log('[ws] reconnecting...');
+        connectWS(WS_URL);
+      }, 2000);
     }
   };
 
