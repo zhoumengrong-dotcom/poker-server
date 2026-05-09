@@ -1,6 +1,5 @@
 const { WebSocketServer } = require('ws');
 const http = require('http');
-const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer((req, res) => {
@@ -9,7 +8,7 @@ const server = http.createServer((req, res) => {
 });
 const wss = new WebSocketServer({ server });
 
-// rooms: { roomId: { state, clients: Map<playerId, ws> } }
+// rooms: { roomId: { state, clients: Map<ws, playerId> } }
 const rooms = new Map();
 
 function getRoom(roomId) {
@@ -17,18 +16,14 @@ function getRoom(roomId) {
   return rooms.get(roomId);
 }
 
-// Strip private hand data — only send a player their own hole cards
-// Hole card indices: 0 and 4 (dark cards)
 function stateForPlayer(state, playerId) {
   if (!state) return null;
   const s = JSON.parse(JSON.stringify(state));
   s.players = s.players.map(p => {
-    if (p.id === playerId) return p; // own full hand
-    // Mask hole cards for others
+    if (p.id === playerId) return p;
     if (p.hand) {
       p.hand = p.hand.map((c, ci) => {
         const isHole = ci === 0 || ci === 4;
-        // Reveal hole cards only at showdown (and only if not folded)
         if (isHole && state.phase !== 'showdown') return null;
         if (isHole && state.phase === 'showdown' && p.folded) return null;
         return c;
@@ -39,35 +34,15 @@ function stateForPlayer(state, playerId) {
   return s;
 }
 
-function broadcast(room, msg, excludeId = null) {
-  room.clients.forEach((ws, pid) => {
-    if (pid === excludeId) return;
+function broadcastAll(room, state) {
+  room.clients.forEach((playerId, ws) => {
     if (ws.readyState !== 1) return;
-    // Send state filtered per player
-    if (msg.type === 'state' && msg.state) {
-      ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(msg.state, pid) }));
-    } else {
-      ws.send(JSON.stringify(msg));
-    }
+    ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(state, playerId) }));
   });
-}
-
-function broadcastAll(room, msg) {
-  broadcast(room, msg, null);
-}
-
-function sendTo(ws, playerId, msg) {
-  if (ws.readyState !== 1) return;
-  if (msg.type === 'state' && msg.state) {
-    ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(msg.state, playerId) }));
-  } else {
-    ws.send(JSON.stringify(msg));
-  }
 }
 
 wss.on('connection', (ws) => {
   let currentRoom = null;
-  let currentPlayerId = null;
 
   ws.on('message', (raw) => {
     let msg;
@@ -76,13 +51,15 @@ wss.on('connection', (ws) => {
 
     if (type === 'join') {
       currentRoom = roomId;
-      currentPlayerId = playerId;
       const room = getRoom(roomId);
-      room.clients.set(playerId, ws);
-      // If this is the first join and state provided, initialise room
+      // Register this ws with its playerId
+      room.clients.set(ws, playerId);
+      // If room has no state yet and joiner provides one, use it
       if (!room.state && state) room.state = state;
-      // Send current state to joiner (their own view)
-      if (room.state) sendTo(ws, playerId, { type: 'state', state: room.state });
+      // Send current state to joiner
+      if (room.state) {
+        ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(room.state, playerId) }));
+      }
       console.log(`[${roomId}] join pid=${playerId} total=${room.clients.size}`);
     }
 
@@ -91,14 +68,18 @@ wss.on('connection', (ws) => {
       const room = rooms.get(currentRoom); if (!room) return;
       if (!room.state || state.ts >= (room.state.ts || 0)) {
         room.state = state;
-        broadcastAll(room, { type: 'state', state });
+        broadcastAll(room, state);
       }
     }
 
     else if (type === 'emote') {
       if (!currentRoom) return;
       const room = rooms.get(currentRoom); if (!room) return;
-      broadcastAll(room, { type: 'emote', playerId: currentPlayerId, emote });
+      room.clients.forEach((pid, ws2) => {
+        if (ws2.readyState === 1) {
+          ws2.send(JSON.stringify({ type: 'emote', playerId, emote }));
+        }
+      });
     }
 
     else if (type === 'ping') {
@@ -110,8 +91,8 @@ wss.on('connection', (ws) => {
     if (currentRoom) {
       const room = rooms.get(currentRoom);
       if (room) {
-        room.clients.delete(currentPlayerId);
-        console.log(`[${currentRoom}] leave pid=${currentPlayerId} total=${room.clients.size}`);
+        room.clients.delete(ws);
+        console.log(`[${currentRoom}] leave total=${room.clients.size}`);
         if (room.clients.size === 0) {
           setTimeout(() => {
             const r = rooms.get(currentRoom);
