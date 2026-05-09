@@ -3,12 +3,21 @@ const http = require('http');
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  // Health check
+  res.writeHead(200, { 
+    'Content-Type': 'text/plain',
+    'Access-Control-Allow-Origin': '*'
+  });
   res.end('poker-ws ok');
 });
-const wss = new WebSocketServer({ server });
 
-// rooms: { roomId: { state, clients: Map<ws, playerId> } }
+const wss = new WebSocketServer({ 
+  server,
+  // Keep connections alive
+  clientTracking: true,
+  perMessageDeflate: false
+});
+
 const rooms = new Map();
 
 function getRoom(roomId) {
@@ -37,14 +46,33 @@ function stateForPlayer(state, playerId) {
 function broadcastAll(room, state) {
   room.clients.forEach((playerId, ws) => {
     if (ws.readyState !== 1) return;
-    ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(state, playerId) }));
+    try {
+      ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(state, playerId) }));
+    } catch(e) {}
   });
 }
 
+// Server-side heartbeat to detect dead connections
+const HEARTBEAT_INTERVAL = 20000; // 20s
+setInterval(() => {
+  wss.clients.forEach(ws => {
+    if (ws.isAlive === false) {
+      ws.terminate();
+      return;
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, HEARTBEAT_INTERVAL);
+
 wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+
   let currentRoom = null;
 
   ws.on('message', (raw) => {
+    ws.isAlive = true; // mark alive on any message
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
     const { type, roomId, playerId, state, emote } = msg;
@@ -52,15 +80,17 @@ wss.on('connection', (ws) => {
     if (type === 'join') {
       currentRoom = roomId;
       const room = getRoom(roomId);
-      // Register this ws with its playerId
       room.clients.set(ws, playerId);
-      // If room has no state yet and joiner provides one, use it
       if (!room.state && state) room.state = state;
-      // Send current state to joiner
       if (room.state) {
-        ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(room.state, playerId) }));
+        try {
+          ws.send(JSON.stringify({ 
+            type: 'state', 
+            state: stateForPlayer(room.state, playerId) 
+          }));
+        } catch(e) {}
       }
-      console.log(`[${roomId}] join pid=${playerId} total=${room.clients.size}`);
+      console.log(`[${roomId}] +join pid=${playerId} total=${room.clients.size}`);
     }
 
     else if (type === 'state_update') {
@@ -77,13 +107,13 @@ wss.on('connection', (ws) => {
       const room = rooms.get(currentRoom); if (!room) return;
       room.clients.forEach((pid, ws2) => {
         if (ws2.readyState === 1) {
-          ws2.send(JSON.stringify({ type: 'emote', playerId, emote }));
+          try { ws2.send(JSON.stringify({ type: 'emote', playerId, emote })); } catch(e) {}
         }
       });
     }
 
     else if (type === 'ping') {
-      ws.send(JSON.stringify({ type: 'pong', ts: msg.ts }));
+      try { ws.send(JSON.stringify({ type: 'pong', ts: msg.ts })); } catch(e) {}
     }
   });
 
@@ -92,7 +122,7 @@ wss.on('connection', (ws) => {
       const room = rooms.get(currentRoom);
       if (room) {
         room.clients.delete(ws);
-        console.log(`[${currentRoom}] leave total=${room.clients.size}`);
+        console.log(`[${currentRoom}] -leave total=${room.clients.size}`);
         if (room.clients.size === 0) {
           setTimeout(() => {
             const r = rooms.get(currentRoom);
@@ -103,7 +133,7 @@ wss.on('connection', (ws) => {
     }
   });
 
-  ws.on('error', () => {});
+  ws.on('error', (e) => { console.error('ws error:', e.message); });
 });
 
 server.listen(PORT, () => console.log(`poker-ws on ${PORT}`));
