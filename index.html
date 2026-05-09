@@ -127,14 +127,20 @@ select.fi{appearance:none;cursor:pointer;}
 .opp-zone{padding:8px 10px 4px;flex-shrink:0;}
 .opp-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
 .opp-slot{background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.09);
-  border-radius:10px;padding:7px 8px;min-width:86px;max-width:118px;flex:1;
-  transition:border-color .25s,box-shadow .25s;}
+  border-radius:10px;padding:7px 8px;min-width:80px;max-width:160px;flex:1;
+  transition:border-color .25s,box-shadow .25s;overflow:hidden;}
 .opp-slot.my-turn-s{border-color:var(--gold);box-shadow:0 0 12px rgba(232,196,74,.3);}
 .opp-slot.folded-s{opacity:.35;}
 .opp-slot.winner-s{border-color:var(--green-ok);box-shadow:0 0 14px rgba(93,223,138,.4);}
 .opp-n{font-size:11px;color:var(--gold);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .opp-c{font-size:10px;color:var(--ivd);margin-bottom:3px;}
-.opp-cards{display:flex;gap:3px;min-height:46px;align-items:center;}
+.opp-cards{display:flex;gap:2px;min-height:46px;align-items:center;flex-wrap:wrap;overflow:hidden;}
+.opp-cards .card{width:28px;height:42px;border-radius:4px;}
+.opp-cards .card .rk{font-size:9px;}
+.opp-cards .card .ctr{font-size:14px;}
+.opp-cards .card .cface .fr{font-size:12px;}
+.opp-cards .card .cface .fs{font-size:9px;}
+.opp-cards .card .ctl,.opp-cards .card .cbr{display:none;}
 .opp-bet{font-size:10px;color:var(--green-ok);margin-top:2px;min-height:13px;}
 .opp-status{font-size:10px;color:#e74c3c;font-weight:700;}
 
@@ -428,7 +434,17 @@ select.fi{appearance:none;cursor:pointer;}
         <input type="number" id="capInput" class="ni" value="0" min="0" placeholder="0=不限"></div>
       <div class="srow"><label>单人每把封顶</label>
         <input type="number" id="capPerInput" class="ni" value="0" min="0" placeholder="0=不限"></div>
-      <div class="hint">💡 7号起：A当6，最小顺子 A-7-8-9-10<br>💡 底池封顶：这把牌底池总额上限<br>💡 单人封顶：每人这把牌最多能押多少</div>
+      <div class="srow"><label>思考时间</label>
+        <select id="timeoutSelect">
+          <option value="0">不限时</option>
+          <option value="15">15秒</option>
+          <option value="30" selected>30秒</option>
+          <option value="45">45秒</option>
+          <option value="60">60秒</option>
+          <option value="90">90秒</option>
+        </select>
+      </div>
+      <div class="hint">💡 7号起：A当6，最小顺子 A-7-8-9-10<br>💡 底池封顶：这把牌底池总额上限<br>💡 单人封顶：每人这把牌最多能押多少<br>💡 思考时间0=不限时，超时自动弃牌</div>
     </div>
   </div>
   <div class="lftr">
@@ -592,6 +608,7 @@ select.fi{appearance:none;cursor:pointer;}
         <li><b style="color:var(--iv)">9号起</b>：A当8，最小顺子 A-9-10-J-Q</li>
       </ul></div>
     <div class="rsect"><h3>单局封顶</h3><p>底池超过封顶后不可加注，只能跟注或弃牌。0=不限。</p></div>
+    <div class="rsect"><h3>思考时间</h3><p>每位玩家每轮操作的时间限制。倒计时结束自动弃牌。设为0则不限时。</p></div>
     <button class="btn btn-o" id="closeRulesBtn" style="margin-top:7px;">关闭</button>
   </div>
 </div>
@@ -621,20 +638,35 @@ let lastWinTs = 0;
 let countdownTimer = null;
 let countdownSec = 30;
 let dealerIdx = 0; // tracks dealer rotation
+let wasClean = false; // track if disconnect was intentional
 
 function connectWS(url) {
-  if (ws) { try { ws.close(); } catch(e) {} }
+  // Don't reconnect if already connected
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+  // Close any existing connection cleanly
+  if (ws && ws.readyState !== WebSocket.CLOSED) {
+    try { ws.close(); } catch(e) {}
+  }
   updateWsStatus(false);
-  ws = new WebSocket(url);
+  try {
+    ws = new WebSocket(url);
+  } catch(e) {
+    console.error('[ws] failed to create:', e);
+    reconnectTimer = setTimeout(() => connectWS(url), 3000);
+    return;
+  }
 
   ws.onopen = () => {
     wsConnected = true;
     updateWsStatus(true);
-    // Auto-rejoin if we were in a room
-    if (roomId && myId && gs) {
-      wsSend({ type: 'join', roomId, playerId: myId });
-      toast('已重新连接');
+    // Auto-rejoin if we were in a room (only if we were actually disconnected)
+    if (roomId && myId && !wasClean) {
+      setTimeout(() => {
+        wsSend({ type: 'join', roomId, playerId: myId });
+        if (gs) toast('已重新连接');
+      }, 300);
     }
+    wasClean = false;
     clearInterval(pingInterval);
     pingInterval = setInterval(() => {
       if (ws && ws.readyState === 1) {
@@ -1076,10 +1108,11 @@ function renderLobby(s) {
     div.appendChild(d);
   });
   if (isHost) {
-    document.getElementById('anteSelect').value    = s.ante || 20;
-    document.getElementById('minCardSelect').value = s.minCard || 7;
-    document.getElementById('capInput').value      = s.cap || 0;
-    document.getElementById('capPerInput').value   = s.capPer || 0;
+    document.getElementById('anteSelect').value      = s.ante || 20;
+    document.getElementById('minCardSelect').value   = s.minCard || 7;
+    document.getElementById('capInput').value        = s.cap || 0;
+    document.getElementById('capPerInput').value     = s.capPer || 0;
+    document.getElementById('timeoutSelect').value   = s.turnTimeout || 30;
     const allR = s.players.every(p => p.isHost || p.ready);
     document.getElementById('startBtn').disabled = s.players.length < 2 || !allR;
     if (s.players.length < 2)  setSt('lobbySt', '至少需要2名玩家', 'i');
@@ -1091,17 +1124,19 @@ function renderLobby(s) {
 function lobbySettingChange() {
   if (!isHost) return;
   const s = gs; if (!s) return;
-  s.ante    = parseInt(document.getElementById('anteSelect').value);
-  s.minCard = parseInt(document.getElementById('minCardSelect').value);
-  s.cap     = parseInt(document.getElementById('capInput').value) || 0;
-  s.capPer  = parseInt(document.getElementById('capPerInput').value) || 0;
+  s.ante      = parseInt(document.getElementById('anteSelect').value);
+  s.minCard   = parseInt(document.getElementById('minCardSelect').value);
+  s.cap       = parseInt(document.getElementById('capInput').value) || 0;
+  s.capPer    = parseInt(document.getElementById('capPerInput').value) || 0;
+  s.turnTimeout = parseInt(document.getElementById('timeoutSelect').value) || 0;
   s.ts = Date.now();
   wsPushState(s);
 }
-document.getElementById('anteSelect').onchange    = lobbySettingChange;
-document.getElementById('minCardSelect').onchange = lobbySettingChange;
-document.getElementById('capInput').onchange      = lobbySettingChange;
-document.getElementById('capPerInput').onchange   = lobbySettingChange;
+document.getElementById('anteSelect').onchange      = lobbySettingChange;
+document.getElementById('minCardSelect').onchange   = lobbySettingChange;
+document.getElementById('capInput').onchange        = lobbySettingChange;
+document.getElementById('capPerInput').onchange     = lobbySettingChange;
+document.getElementById('timeoutSelect').onchange   = lobbySettingChange;
 
 document.getElementById('readyBtn').onclick = () => {
   if (!gs) return;
@@ -1151,6 +1186,7 @@ function startNewRound(s) {
   let capDesc = '';
   if (s.cap > 0) capDesc += ` · 底池封顶${s.cap}`;
   if (s.capPer > 0) capDesc += ` · 单人封顶${s.capPer}`;
+  if (s.turnTimeout > 0) capDesc += ` · 限时${s.turnTimeout}s`;
   s.log = [`第${s.round}局 · 底注${s.ante} · ${s.minCard}号起${capDesc}`];
   s.log.push('第1轮发牌（1暗+1明）');
   s.ts = Date.now();
@@ -1294,31 +1330,26 @@ function calcSidePots(players) {
 // ── Peek drag interaction ──────────────────────────────────────
 function setupPeekDrag(coverEl) {
   let startX = 0, startY = 0, curX = 0, curY = 0, active = false;
-  const MAX = 60;
-
-  function getPoint(e) {
-    return e.changedTouches ? e.changedTouches[0] : (e.touches ? e.touches[0] : e);
-  }
+  const MAX = 64;
 
   function onStart(e) {
     active = true;
-    const pt = getPoint(e);
-    startX = pt.clientX - curX;
-    startY = pt.clientY - curY;
+    startX = e.clientX - curX;
+    startY = e.clientY - curY;
     coverEl.classList.add('lifted');
+    coverEl.setPointerCapture(e.pointerId);
     e.preventDefault();
     e.stopPropagation();
   }
 
   function onMove(e) {
     if (!active) return;
-    const pt = getPoint(e);
-    let dx = pt.clientX - startX;
-    let dy = pt.clientY - startY;
+    let dx = e.clientX - startX;
+    let dy = e.clientY - startY;
     const d = Math.sqrt(dx*dx + dy*dy);
     if (d > MAX) { const r = MAX/d; dx*=r; dy*=r; }
     curX = dx; curY = dy;
-    coverEl.style.transform = `translate(${dx}px,${dy}px) rotate(${dx*0.12}deg)`;
+    coverEl.style.transform = `translate(${dx}px,${dy}px) rotate(${dx*0.1}deg)`;
     e.preventDefault();
     e.stopPropagation();
   }
@@ -1333,15 +1364,11 @@ function setupPeekDrag(coverEl) {
     setTimeout(() => { coverEl.style.transition = ''; }, 420);
   }
 
-  // attach to cover itself for start
-  coverEl.addEventListener('mousedown',  onStart, { passive: false });
-  coverEl.addEventListener('touchstart', onStart, { passive: false });
-  // attach move/end to window so drag works outside the element
-  window.addEventListener('mousemove',  onMove, { passive: false });
-  window.addEventListener('touchmove',  onMove, { passive: false, capture: true });
-  window.addEventListener('mouseup',    onEnd);
-  window.addEventListener('touchend',   onEnd);
-  window.addEventListener('touchcancel',onEnd);
+  // Use Pointer Events API — works for both mouse and touch, no passive issues
+  coverEl.addEventListener('pointerdown', onStart, { passive: false });
+  coverEl.addEventListener('pointermove', onMove,  { passive: false });
+  coverEl.addEventListener('pointerup',   onEnd);
+  coverEl.addEventListener('pointercancel', onEnd);
 }
 
 function makePeekCard(frontCard, lg, withDeal, dealDelay) {
@@ -1502,7 +1529,8 @@ function renderGame(s, withDeal) {
     // Countdown
     if (isMyTurn) {
       if (!countdownTimer) {
-        startCountdown(30, () => doAction('fold')); // auto-fold on timeout
+        const sec = gs?.turnTimeout || 0;
+        if (sec > 0) startCountdown(sec, () => doAction('fold'));
       }
     } else {
       clearCountdown();
@@ -1742,7 +1770,7 @@ function addChips(amount) {
 }
 window.addChips = addChips;
 document.getElementById('exitBtn').onclick = () => {
-  // Clear room state so they can start fresh
+  wasClean = true;
   stopReconnect();
   roomId = ''; myId = ''; isHost = false; gs = null;
   show('homeScreen');
@@ -1752,19 +1780,24 @@ document.getElementById('exitBtn').onclick = () => {
 //  STATE CHANGE
 // ══════════════════════════════════
 function onStateChange(s) {
-  if (!s || s.ts < (gs?.ts || 0)) return;
-  // Debug: log my hand on every state change
-  const me = s.players?.find(p => p.id === myId);
-  if (me) console.log('[hand]', JSON.stringify(me.hand));
+  if (!s) return;
+  // Allow same ts for reconnect scenarios
+  if (gs && s.ts < gs.ts) return;
   gs = s;
   const cur = document.querySelector('.screen.active')?.id;
-  if (s.phase === 'lobby' && cur !== 'gameScreen') {
+  if (s.phase === 'lobby') {
     if (cur === 'homeScreen' && !roomId) return; // not in a room
+    if (cur === 'gameScreen') return; // don't go back to lobby mid-game
     renderLobby(s);
     if (cur === 'homeScreen') show('lobbyScreen');
   } else if (s.phase === 'playing' || s.phase === 'showdown') {
-    if (cur === 'lobbyScreen') show('gameScreen');
-    renderGame(s, false);
+    // Switch ALL clients to game screen when game starts
+    if (cur === 'lobbyScreen' || cur === 'homeScreen') {
+      show('gameScreen');
+      renderGame(s, true); // with deal animation
+    } else {
+      renderGame(s, false);
+    }
   }
 }
 </script>
