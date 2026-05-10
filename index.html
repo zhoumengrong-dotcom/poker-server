@@ -124,23 +124,26 @@ select.fi{appearance:none;cursor:pointer;}
 .ping-badge.off{color:#e74c3c;background:rgba(231,76,60,.1);border-color:rgba(231,76,60,.3);}
 
 .gtable{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;overflow:visible;}
-.opp-zone{padding:8px 10px 4px;flex-shrink:0;}
-.opp-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+.opp-zone{padding:8px 10px 4px;flex-shrink:0;overflow:visible;}
+.opp-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;overflow:visible;}
 .opp-slot{background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.09);
-  border-radius:10px;padding:7px 8px;min-width:80px;max-width:160px;flex:1;
-  transition:border-color .25s,box-shadow .25s;overflow:hidden;}
+  border-radius:10px;padding:7px 8px;min-width:80px;max-width:220px;flex:1;
+  transition:border-color .25s,box-shadow .25s;overflow:visible;}
 .opp-slot.my-turn-s{border-color:var(--gold);box-shadow:0 0 12px rgba(232,196,74,.3);}
 .opp-slot.folded-s{opacity:.35;}
 .opp-slot.winner-s{border-color:var(--green-ok);box-shadow:0 0 14px rgba(93,223,138,.4);}
 .opp-n{font-size:11px;color:var(--gold);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .opp-c{font-size:10px;color:var(--ivd);margin-bottom:3px;}
-.opp-cards{display:flex;gap:2px;min-height:46px;align-items:center;flex-wrap:wrap;overflow:hidden;}
-.opp-cards .card{width:28px;height:42px;border-radius:4px;}
-.opp-cards .card .rk{font-size:9px;}
-.opp-cards .card .ctr{font-size:14px;}
-.opp-cards .card .cface .fr{font-size:12px;}
-.opp-cards .card .cface .fs{font-size:9px;}
-.opp-cards .card .ctl,.opp-cards .card .cbr{display:none;}
+.opp-cards{display:flex;gap:3px;min-height:58px;align-items:center;flex-wrap:nowrap;overflow:visible;}
+.opp-cards .card{width:36px;height:54px;border-radius:5px;flex-shrink:0;}
+.opp-cards .card .rk{font-size:12px;}
+.opp-cards .card .ctr{font-size:18px;}
+.opp-cards .card .cface .fr{font-size:14px;}
+.opp-cards .card .cface .fs{font-size:11px;}
+.opp-cards .card .ctl{top:3px;left:3px;}
+.opp-cards .card .cbr{bottom:3px;right:3px;}
+.opp-cards .card .ctl .rk,.opp-cards .card .cbr .rk{font-size:11px;}
+.opp-cards .card .ctl .st,.opp-cards .card .cbr .st{font-size:9px;}
 .opp-bet{font-size:10px;color:var(--green-ok);margin-top:2px;min-height:13px;}
 .opp-status{font-size:10px;color:#e74c3c;font-weight:700;}
 
@@ -1489,6 +1492,7 @@ function renderGame(s, withDeal) {
         (myP.hand || []).forEach((c, ci) => {
           if (c === null) return;
           const isHole = ci === 0 || ci === 4;
+          console.log('[card]', ci, isHole, c ? c.r+c.s : 'null');
           const dealDelay = ci * 0.12;
           if (isHole) {
             // peek widget: draggable cover over real card
@@ -1664,8 +1668,34 @@ function doAction(type, amount) {
   advanceTurn(s);
 }
 
+function dealRemainingStreets(s) {
+  // Deal all remaining streets instantly then go to showdown
+  while (s.street < 4) {
+    s.street++;
+    dealStreetCards(s, s.street);
+  }
+  const streetNames = ['','第1轮','第2轮','第3轮','第4轮'];
+  s.log.push('所有人 All-In，直接发完剩余牌');
+  showBanner('All-In · 直接摊牌', 1200);
+  s.currentBet = 0;
+  s.players.forEach(p => { p.bet = 0; });
+  s.roundActions = 0;
+  // Go straight to showdown after a short delay for animation
+  s.ts = Date.now(); gs = s; wsPushState(s);
+  setTimeout(() => doShowdown(s), 1500);
+}
+
 function advanceTurn(s) {
   const active = s.players.filter(p => !p.folded);
+
+  // If all remaining players are all-in (chips=0), skip betting and deal all streets
+  const canBet = active.filter(p => p.chips > 0);
+  if (active.length > 1 && canBet.length <= 1) {
+    // Deal remaining streets without betting
+    dealRemainingStreets(s);
+    return;
+  }
+
   if (active.length <= 1) {
     const w = active[0] || s.players[0];
     w.chips += s.pot;
