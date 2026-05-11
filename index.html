@@ -804,9 +804,17 @@ function banner(text, dur) {
 }
 
 function shuffle(arr) {
+  // Fisher-Yates with crypto.getRandomValues for fair randomness
   const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+  const n = a.length;
+  const rand = new Uint32Array(n);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(rand);
+  } else {
+    for (let i = 0; i < n; i++) rand[i] = Math.floor(Math.random() * 0xFFFFFFFF);
+  }
+  for (let i = n - 1; i > 0; i--) {
+    const j = rand[i] % (i + 1);
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -1532,15 +1540,17 @@ function advanceTurn(s) {
     return;
   }
 
-  // All remaining all-in (no one can bet) — deal through and showdown
-  const canBet = active.filter(p => p.chips > 0);
-  if (active.length > 1 && canBet.length <= 1) {
+  // Check if betting round done
+  const allActed = s.players.every(p => p.folded || p.bet === s.currentBet || p.chips === 0);
+
+  // All-in runout: only triggers when betting is fully settled (everyone matched)
+  // AND at most one player has chips left to bet further
+  const canStillBet = active.filter(p => p.chips > 0);
+  if (allActed && active.length > 1 && canStillBet.length <= 1) {
     dealRemainingStreets(s);
     return;
   }
 
-  // Check if betting round done
-  const allActed = s.players.every(p => p.folded || p.bet === s.currentBet || p.chips === 0);
   if (allActed && s.roundActions >= active.length) {
     if (s.street >= 4) {
       doShowdown(s);
@@ -1593,6 +1603,15 @@ function dealRemainingStreets(s) {
 }
 
 function doShowdown(s) {
+  // Safety: ensure all active players have 5 cards before showdown
+  const needsDealing = s.players.some(p => !p.folded && (p.hand || []).filter(c => c).length < 5);
+  if (needsDealing) {
+    while (s.street < 4) {
+      s.street++;
+      dealStreetCards(s, s.street);
+    }
+  }
+
   banner('摊　牌', 900);
   const realHand = p => (p.hand || []).filter(c => c);
   const actives = s.players.filter(p => !p.folded);
@@ -1810,7 +1829,12 @@ function showWinModal(s) {
   document.getElementById('wName').textContent = w.name;
   document.getElementById('wHand').textContent = '牌型：' + w.handName;
   document.getElementById('wAmt').textContent = '+' + w.pot + ' 筹码';
-  document.getElementById('wCards').innerHTML = (w.cards || []).map(c => mkCard(c, false, true, 'win')).join('');
+  // Show all 5 cards in winner display
+  let winCardsHtml = '';
+  if (w.cards && w.cards.length > 0) {
+    winCardsHtml = w.cards.map(c => c ? mkCard(c, false, true, 'win') : mkCard(null, true, true, '')).join('');
+  }
+  document.getElementById('wCards').innerHTML = winCardsHtml;
   document.getElementById('readyNextBtn').disabled = false;
   document.getElementById('readyNextBtn').textContent = '✓ 准备下一局';
   document.getElementById('nextRoundBtn').style.display = 'none';
