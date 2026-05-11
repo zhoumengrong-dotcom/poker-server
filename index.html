@@ -244,18 +244,21 @@ select.fi{appearance:none;cursor:pointer;}
 /* CARDS */
 .card{
   width:42px;height:62px;
-  background:linear-gradient(160deg,#ffffff 0%,#f8f6f0 100%);
+  background:-webkit-linear-gradient(160deg,#ffffff 0%,#f8f6f0 100%);background:linear-gradient(160deg,#ffffff 0%,#f8f6f0 100%);
   border-radius:6px;
   box-shadow:1px 2px 6px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,1);
   flex-shrink:0;border:1px solid #e0d8c8;
   position:relative;
   font-family:'Georgia',serif;
+  display:inline-flex;align-items:center;justify-content:center;
+  -webkit-linear-gradient:none;
+  background-image:linear-gradient(160deg,#ffffff 0%,#f8f6f0 100%);
 }
 .card-lg{width:56px;height:80px;border-radius:7px;}
 .card.rc{color:#c0392b;}
 .card.bk{color:#1a1a2e;}
 .card.back{
-  background:linear-gradient(135deg,#1e3c8a 0%,#0d2461 100%);
+  background:-webkit-linear-gradient(135deg,#1e3c8a 0%,#0d2461 100%);background:linear-gradient(135deg,#1e3c8a 0%,#0d2461 100%);
   border:1px solid #2a4fa0;overflow:hidden;
 }
 .card.back::after{
@@ -1355,6 +1358,7 @@ function startNewRound(s) {
   show('gameScreen');
   showBanner('第1轮发牌', 800);
   setTimeout(function() {
+    renderLock = true;
     var myHandEl = document.getElementById('myHand');
     var slots = STREET_DEAL[1];
     var allCards = [];
@@ -1368,7 +1372,11 @@ function startNewRound(s) {
       });
     });
     function dealNext(idx) {
-      if (idx >= allCards.length) { renderGame(s, true); return; }
+      if (idx >= allCards.length) {
+        renderLock = false;
+        renderGame(s, true);
+        return;
+      }
       var c = allCards[idx];
       dealerFlyCard(c.isMine && !c.isHole ? c.card : null, c.targetEl, c.isHole)
         .then(function() { setTimeout(function() { dealNext(idx + 1); }, 90); });
@@ -1666,7 +1674,9 @@ function makePeekCard(frontCard, lg, withDeal, dealDelay, holeIdx) {
   return wrap;
 }
 
+let renderLock = false;
 function renderGame(s, withDeal) {
+  if (renderLock && withDeal) return; // prevent double deal render
   gs = s;
   const myIdx = s.players.findIndex(p => p.id === myId);
   const myP   = s.players[myIdx];
@@ -1999,6 +2009,7 @@ function advanceTurn(s) {
     s.ts = Date.now(); gs = s; wsPushState(s);
     // Fly cards for this street
     setTimeout(function() {
+      renderLock = true;
       var myHandEl = document.getElementById('myHand');
       var slots = STREET_DEAL[s.street];
       var allCards = [];
@@ -2012,7 +2023,11 @@ function advanceTurn(s) {
         });
       });
       function dealNext(idx) {
-        if (idx >= allCards.length) { renderGame(s, true); return; }
+        if (idx >= allCards.length) {
+          renderLock = false;
+          renderGame(s, true);
+          return;
+        }
         var c = allCards[idx];
         dealerFlyCard(c.isMine && !c.isHole ? c.card : null, c.targetEl, c.isHole)
           .then(function() { setTimeout(function() { dealNext(idx + 1); }, 90); });
