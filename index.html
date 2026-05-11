@@ -728,6 +728,8 @@ let countdownTimer = null;
 let countdownSec = 30;
 let dealerIdx = 0; // tracks dealer rotation
 let wasClean = false; // track if disconnect was intentional
+const revealedHoles = new Set(); // track which hole card indices player has peeked
+let localLoans = []; // loan records
 
 function connectWS(url) {
   // Don't reconnect if already connected
