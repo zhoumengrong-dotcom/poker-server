@@ -16,7 +16,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;-webkit-overflow-scrolling:touch;}
 body{font-family:'Georgia','STSong',serif;background:var(--gd);color:var(--iv);}
-.screen{display:none;position:fixed;inset:0;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:1;}
+.screen{display:none;position:fixed;inset:0;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:1;-webkit-transform:translateZ(0);transform:translateZ(0);}
 .screen.active{display:flex;}
 
 /* ── HOME ── */
@@ -47,16 +47,20 @@ body{font-family:'Georgia','STSong',serif;background:var(--gd);color:var(--iv);}
 .fi.rid-fi{text-transform:uppercase;letter-spacing:7px;font-size:20px;text-align:center;}
 select.fi{appearance:none;cursor:pointer;}
 .btn{display:block;width:100%;padding:12px;border:none;border-radius:10px;
-  font-size:15px;font-family:inherit;font-weight:700;cursor:pointer;transition:all .18s;}
+  font-size:15px;font-family:inherit;font-weight:700;cursor:pointer;transition:all .18s;
+  -webkit-appearance:none;appearance:none;touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(0,0,0,0);}
 .btn-g{background:linear-gradient(135deg,#e8c44a,#c9971a);color:#1a0f00;}
 .btn-g:hover{filter:brightness(1.1);}
 .btn-g:disabled{opacity:.35;cursor:not-allowed;}
 .btn-o{background:transparent;border:1px solid rgba(232,196,74,.38);color:var(--gold);margin-top:7px;touch-action:manipulation;}
 .btn-o:hover{background:rgba(232,196,74,.08);}
 .btn-dsm{background:rgba(192,57,43,.22);border:1px solid rgba(192,57,43,.45);
-  color:#e74c3c;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+  color:#e74c3c;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;
+  -webkit-appearance:none;touch-action:manipulation;}
 .btn-nsm{background:rgba(232,196,74,.1);border:1px solid var(--bdr);
-  color:var(--gold);border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+  color:var(--gold);border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;
+  -webkit-appearance:none;touch-action:manipulation;}
 .stl{font-size:13px;min-height:17px;text-align:center;margin-top:7px;}
 .e{color:#e74c3c;}.o{color:var(--green-ok);}.i{color:var(--ivd);}
 .sp{display:inline-block;width:12px;height:12px;border:2px solid rgba(232,196,74,.18);
@@ -104,7 +108,7 @@ select.fi{appearance:none;cursor:pointer;}
 .srow select,.ni{background:rgba(255,255,255,.07);border:1px solid rgba(232,196,74,.22);
   border-radius:6px;color:var(--iv);padding:5px 8px;font-size:13px;font-family:inherit;outline:none;width:130px;}
 .hint{font-size:11px;color:var(--ivd);margin-top:6px;line-height:1.6;}
-.lftr{padding:12px 15px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:6px;}
+.lftr{padding:12px 15px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:6px;position:relative;z-index:10;}
 
 /* ═══════════════════════
    GAME TABLE
@@ -159,25 +163,22 @@ select.fi{appearance:none;cursor:pointer;}
 .dealer-container{position:absolute;top:-55px;left:50%;transform:translateX(-50%);z-index:10;}
 .dealer-svg{width:80px;height:80px;}
 .dealer-body-g{animation:dealerBob 2.8s ease-in-out infinite;}
+@-webkit-keyframes dealerBob{0%,100%{transform:translateY(0)}
 @keyframes dealerBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 #dealerArmR{transform-origin:34px 38px;transition:transform 0s;}
 #dealerArmR.swing{animation:armSwing 0.45s ease-in-out;}
+@-webkit-keyframes armSwing{0%{transform:rotate(0)}
 @keyframes armSwing{0%{transform:rotate(0)}35%{transform:rotate(-38deg)}100%{transform:rotate(0)}}
 .fly-card{
   position:fixed;z-index:999;pointer-events:none;
   width:26px;height:38px;
-  background:var(--fc-bg,#fffef8);
-  border-radius:4px;border:1px solid var(--fc-bdr,#e0d8c8);
+  background:#fffef8;
+  border-radius:4px;border:1px solid #e0d8c8;
   display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:700;
   box-shadow:1px 2px 6px rgba(0,0,0,.55);
-  animation:flyToPlayer var(--fly-dur,.7s) cubic-bezier(.25,.46,.45,.94) both;
 }
-@keyframes flyToPlayer{
-  0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);}
-  45%{opacity:1;transform:translate(var(--tx45),var(--ty45)) rotate(var(--tr45)) scale(0.88);}
-  100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--tr)) scale(0.82);}
-}
+.fly-card.hole-fly{background:#1e3c8a;border-color:#2a4fa0;}
 .pot-wrap{text-align:center;z-index:2;}
 .pot-lbl{font-size:10px;color:var(--ivd);letter-spacing:2px;text-transform:uppercase;}
 .pot-num{font-size:25px;color:var(--gold);font-weight:700;
@@ -297,6 +298,7 @@ select.fi{appearance:none;cursor:pointer;}
 @keyframes flipCard{0%{transform:scaleX(1)}50%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 .card.win-glow{box-shadow:2px 3px 8px rgba(0,0,0,.55),0 0 18px rgba(93,223,138,.7);
   animation:wglow 1s ease infinite alternate;}
+@-webkit-keyframes wglow{from{box-shadow:2px 3px 8px rgba(0,0,0,.55),0 0 10px rgba(93,223,138,.5);}
 @keyframes wglow{from{box-shadow:2px 3px 8px rgba(0,0,0,.55),0 0 10px rgba(93,223,138,.5);}
   to{box-shadow:2px 3px 8px rgba(0,0,0,.55),0 0 24px rgba(93,223,138,.9);}}
 
@@ -318,8 +320,10 @@ select.fi{appearance:none;cursor:pointer;}
   padding:11px 26px;font-size:19px;color:var(--gold);font-weight:700;
   letter-spacing:3px;z-index:500;pointer-events:none;
   animation:bannerIn .5s cubic-bezier(.34,1.56,.64,1) both;}
+@-webkit-keyframes bannerIn{from{opacity:0;transform:translate(-50%,-50%) scale(.6);}
 @keyframes bannerIn{from{opacity:0;transform:translate(-50%,-50%) scale(.6);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
 .phase-banner.out{animation:bannerOut .35s ease both;}
+@-webkit-keyframes bannerOut{to{opacity:0;transform:translate(-50%,-50%) scale(1.1);}
 @keyframes bannerOut{to{opacity:0;transform:translate(-50%,-50%) scale(1.1);}}
 
 /* FIREWORKS */
@@ -335,6 +339,7 @@ select.fi{appearance:none;cursor:pointer;}
 .mbox{background:#0c3d1a;border:2px solid var(--gold);border-radius:17px;
   padding:22px 20px;width:100%;max-width:310px;text-align:center;
   animation:mboxIn .4s cubic-bezier(.34,1.36,.64,1) both;}
+@-webkit-keyframes mboxIn{from{opacity:0;transform:scale(.7);}
 @keyframes mboxIn{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
 .mbox .trophy{font-size:42px;margin-bottom:6px;}
 .mbox h2{font-size:18px;color:var(--gold);margin-bottom:3px;}
@@ -403,7 +408,7 @@ select.fi{appearance:none;cursor:pointer;}
   <div class="home-panel">
     <h3>▸ 创建房间</h3>
     <label class="fl">昵称</label><input id="cName" class="fi" placeholder="你的昵称" maxlength="10">
-    <label class="fl">房间密码</label><input id="cPwd" class="fi" placeholder="设置密码" maxlength="16" type="password">
+    <label class="fl">房间密码</label><input id="cPwd" class="fi" placeholder="设置数字密码" maxlength="8" type="number" pattern="[0-9]*" inputmode="numeric">
     <label class="fl">初始筹码</label>
     <select id="cChips" class="fi">
       <option value="500">500</option><option value="1000" selected>1000</option>
@@ -416,7 +421,7 @@ select.fi{appearance:none;cursor:pointer;}
     <h3>▸ 加入房间</h3>
     <label class="fl">昵称</label><input id="jName" class="fi" placeholder="你的昵称" maxlength="10">
     <label class="fl">房间号</label><input id="jRoomId" class="fi rid-fi" placeholder="XXXXXX" maxlength="6">
-    <label class="fl">房间密码</label><input id="jPwd" class="fi" placeholder="输入密码" maxlength="16" type="password">
+    <label class="fl">房间密码</label><input id="jPwd" class="fi" placeholder="输入数字密码" maxlength="8" type="number" pattern="[0-9]*" inputmode="numeric">
     <button class="btn btn-o" id="joinBtn">加入房间</button>
   </div>
 
@@ -996,49 +1001,58 @@ function animDeal(container, cards, isMe) {
   });
 }
 
-function dealerFlyCard(cardData, targetEl, isHole, delayMs) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const arm = document.getElementById('dealerArmR');
-      if (arm) {
-        arm.classList.remove('swing');
-        void arm.offsetWidth;
-        arm.classList.add('swing');
-        setTimeout(() => arm.classList.remove('swing'), 500);
+function dealerFlyCard(cardData, targetEl, isHole) {
+  return new Promise(function(resolve) {
+    var arm = document.getElementById('dealerArmR');
+    if (arm) {
+      arm.classList.remove('swing');
+      void arm.offsetWidth;
+      arm.classList.add('swing');
+      setTimeout(function() { arm.classList.remove('swing'); }, 500);
+    }
+    var dealerEl = document.getElementById('dealerContainer');
+    var targetRect = targetEl ? targetEl.getBoundingClientRect() : null;
+    var dealerRect = dealerEl ? dealerEl.getBoundingClientRect() : null;
+    if (!dealerRect || !targetRect) { resolve(); return; }
+    var sx = dealerRect.left + dealerRect.width * 0.85;
+    var sy = dealerRect.top + dealerRect.height * 0.55;
+    var ex = targetRect.left + targetRect.width / 2;
+    var ey = targetRect.top + targetRect.height / 2;
+    var fc = document.createElement('div');
+    fc.className = 'fly-card' + (isHole ? ' hole-fly' : '');
+    if (!isHole && cardData) {
+      var isRed = ['♥','♦'].indexOf(cardData.s) >= 0;
+      fc.style.color = isRed ? '#c0392b' : '#1a1a2e';
+      fc.textContent = (cardData.r||'') + (cardData.s||'');
+    }
+    fc.style.cssText += ';position:fixed;left:' + (sx-13) + 'px;top:' + (sy-19) + 'px;';
+    document.body.appendChild(fc);
+    // JS-based animation — works reliably in Safari
+    var startTime = null;
+    var dur = 620;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var p = Math.min((ts - startTime) / dur, 1);
+      // Ease out cubic
+      var e = 1 - Math.pow(1 - p, 3);
+      // Arc: mid point goes up
+      var arcY = -40 * Math.sin(Math.PI * p);
+      var cx = sx - 13 + (ex - sx) * e;
+      var cy = sy - 19 + (ey - sy) * e + arcY;
+      var rot = (ex > sx ? 12 : -12) * p;
+      var scale = 1 - 0.18 * p;
+      fc.style.left = cx + 'px';
+      fc.style.top  = cy + 'px';
+      fc.style.transform = 'rotate(' + rot + 'deg) scale(' + scale + ')';
+      fc.style.opacity = p > 0.8 ? String(1 - (p - 0.8) * 5) : '1';
+      if (p < 1) {
+        requestAnimationFrame(step);
+      } else {
+        fc.remove();
+        resolve();
       }
-      const dealerEl = document.getElementById('dealerContainer');
-      const targetRect = targetEl ? targetEl.getBoundingClientRect() : null;
-      const dealerRect = dealerEl ? dealerEl.getBoundingClientRect() : null;
-      if (!dealerRect || !targetRect) { resolve(); return; }
-      const sx = dealerRect.left + dealerRect.width * 0.85;
-      const sy = dealerRect.top + dealerRect.height * 0.55;
-      const tx = targetRect.left + targetRect.width/2 - sx;
-      const ty = targetRect.top + targetRect.height/2 - sy;
-      const mx = tx * 0.4;
-      const my = ty * 0.3 - 35;
-      const rot = tx > 0 ? 12 : -12;
-      const fc = document.createElement('div');
-      fc.className = 'fly-card';
-      if (isHole) {
-        fc.style.setProperty('--fc-bg', '#1e3c8a');
-        fc.style.setProperty('--fc-bdr', '#2a4fa0');
-      } else if (cardData) {
-        const isRed = ['♥','♦'].includes(cardData.s);
-        fc.style.color = isRed ? '#c0392b' : '#1a1a2e';
-        fc.textContent = (cardData.r||'') + (cardData.s||'');
-      }
-      fc.style.left = (sx - 13) + 'px';
-      fc.style.top  = (sy - 19) + 'px';
-      fc.style.setProperty('--tx45', mx + 'px');
-      fc.style.setProperty('--ty45', my + 'px');
-      fc.style.setProperty('--tr45', (rot * 0.5) + 'deg');
-      fc.style.setProperty('--tx', tx + 'px');
-      fc.style.setProperty('--ty', ty + 'px');
-      fc.style.setProperty('--tr', rot + 'deg');
-      fc.style.setProperty('--fly-dur', '0.65s');
-      document.body.appendChild(fc);
-      setTimeout(() => { fc.remove(); resolve(); }, 700);
-    }, delayMs);
+    }
+    requestAnimationFrame(step);
   });
 }
 
@@ -1338,26 +1352,26 @@ function startNewRound(s) {
   wsPushState(s);
   show('gameScreen');
   showBanner('第1轮发牌', 800);
-  setTimeout(async () => {
-    const myIdx = s.players.findIndex(p => p.id === myId);
-    const myHandEl = document.getElementById('myHand');
-    const slots = STREET_DEAL[1]; // [0,1]
-    for (const cardIdx of slots) {
-      const isHole = cardIdx === 0 || cardIdx === 4;
-      for (let pi = 0; pi < s.players.length; pi++) {
-        const p = s.players[pi];
-        if (p.folded) continue;
-        const isMine = p.id === myId;
-        const targetEl = isMine
-          ? myHandEl
-          : document.getElementById('opp_' + p.id);
-        const card = p.hand[cardIdx];
-        await dealerFlyCard(isMine && !isHole ? card : null, targetEl, isHole, 0);
-        await new Promise(r => setTimeout(r, 100));
-      }
-      await new Promise(r => setTimeout(r, 120));
+  setTimeout(function() {
+    var myHandEl = document.getElementById('myHand');
+    var slots = STREET_DEAL[1];
+    var allCards = [];
+    slots.forEach(function(cardIdx) {
+      var isHole = cardIdx === 0 || cardIdx === 4;
+      s.players.forEach(function(p, pi) {
+        if (p.folded) return;
+        var isMine = p.id === myId;
+        var targetEl = isMine ? myHandEl : document.getElementById('opp_' + p.id);
+        allCards.push({card: p.hand[cardIdx], targetEl: targetEl, isHole: isHole, isMine: isMine});
+      });
+    });
+    function dealNext(idx) {
+      if (idx >= allCards.length) { renderGame(s, true); return; }
+      var c = allCards[idx];
+      dealerFlyCard(c.isMine && !c.isHole ? c.card : null, c.targetEl, c.isHole)
+        .then(function() { setTimeout(function() { dealNext(idx + 1); }, 90); });
     }
-    renderGame(s, true);
+    dealNext(0);
   }, 400);
 }
 
@@ -1550,10 +1564,15 @@ function setupPeekDrag(coverEl, onReveal) {
     }
   }
 
+  // Use both pointer and touch events for Safari compatibility
   coverEl.addEventListener('pointerdown',   onStart, { passive: false });
   coverEl.addEventListener('pointermove',   onMove,  { passive: false });
   coverEl.addEventListener('pointerup',     onEnd);
   coverEl.addEventListener('pointercancel', onEnd);
+  // Safari fallback
+  coverEl.addEventListener('touchstart',  function(e){ onStart(e.touches[0]); e.preventDefault(); }, { passive: false });
+  coverEl.addEventListener('touchmove',   function(e){ onMove(e.touches[0]);  e.preventDefault(); }, { passive: false });
+  coverEl.addEventListener('touchend',    function(e){ onEnd(e); }, { passive: false });
 }
 
 function makePeekCard(frontCard, lg, withDeal, dealDelay, holeIdx) {
@@ -1977,22 +1996,26 @@ function advanceTurn(s) {
     showBanner(streetNames[s.street] + ' 发牌', 700);
     s.ts = Date.now(); gs = s; wsPushState(s);
     // Fly cards for this street
-    setTimeout(async () => {
-      const slots = STREET_DEAL[s.street];
-      for (const cardIdx of slots) {
-        const isHole = cardIdx === 0 || cardIdx === 4;
-        for (let pi = 0; pi < s.players.length; pi++) {
-          const p = s.players[pi];
-          if (p.folded) continue;
-          const isMine = p.id === myId;
-          const targetEl = isMine
-            ? document.getElementById('myHand')
-            : document.getElementById('opp_' + p.id);
-          await dealerFlyCard(isMine && !isHole ? p.hand[cardIdx] : null, targetEl, isHole, 0);
-          await new Promise(r => setTimeout(r, 90));
-        }
+    setTimeout(function() {
+      var myHandEl = document.getElementById('myHand');
+      var slots = STREET_DEAL[s.street];
+      var allCards = [];
+      slots.forEach(function(cardIdx) {
+        var isHole = cardIdx === 0 || cardIdx === 4;
+        s.players.forEach(function(p) {
+          if (p.folded) return;
+          var isMine = p.id === myId;
+          var targetEl = isMine ? myHandEl : document.getElementById('opp_' + p.id);
+          allCards.push({card: p.hand[cardIdx], targetEl: targetEl, isHole: isHole, isMine: isMine});
+        });
+      });
+      function dealNext(idx) {
+        if (idx >= allCards.length) { renderGame(s, true); return; }
+        var c = allCards[idx];
+        dealerFlyCard(c.isMine && !c.isHole ? c.card : null, c.targetEl, c.isHole)
+          .then(function() { setTimeout(function() { dealNext(idx + 1); }, 90); });
       }
-      renderGame(s, true);
+      dealNext(0);
     }, 200);
     return;
   }
