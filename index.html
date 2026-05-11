@@ -125,6 +125,7 @@ select.fi{appearance:none;cursor:pointer;}
 
 .gtable{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;overflow:visible;}
 .opp-zone{padding:8px 10px 4px;flex-shrink:0;overflow:visible;}
+.gtable{padding-top:8px;}
 .opp-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;overflow:visible;}
 .opp-slot{background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.09);
   border-radius:10px;padding:7px 8px;min-width:80px;max-width:220px;flex:1;
@@ -146,18 +147,37 @@ select.fi{appearance:none;cursor:pointer;}
 .opp-cards .card .ctl .st,.opp-cards .card .cbr .st{font-size:9px;}
 .opp-bet{font-size:10px;color:var(--green-ok);margin-top:2px;min-height:13px;}
 .opp-status{font-size:10px;color:#e74c3c;font-weight:700;}
+.opp-hand-rank{font-size:11px;color:var(--ivd);margin-top:3px;font-style:italic;}
+.opp-winner-rank{color:var(--green-ok);font-weight:700;font-size:12px;font-style:normal;}
 
-.table-oval{flex:1;margin:0 10px;
+.table-oval{flex:1;margin:0 10px;overflow:visible;
   background:radial-gradient(ellipse at center,#1e7a40,#0d4a2a 65%,#083318 100%);
   border:6px solid #4a2e0a;border-radius:50% / 40%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   position:relative;box-shadow:inset 0 0 40px rgba(0,0,0,.4),0 4px 20px rgba(0,0,0,.5);
   min-height:100px;}
-.deck-vis{position:absolute;top:10px;right:12px;width:30px;height:44px;}
-.deck-vis .dc{position:absolute;width:30px;height:44px;background:#1e3a8a;
-  border-radius:4px;border:1px solid rgba(255,255,255,.15);}
-.deck-vis .dc:nth-child(2){transform:translate(-1px,-1px);}
-.deck-vis .dc:nth-child(3){transform:translate(-2px,-2px);}
+.dealer-container{position:absolute;top:-55px;left:50%;transform:translateX(-50%);z-index:10;}
+.dealer-svg{width:80px;height:80px;}
+.dealer-body-g{animation:dealerBob 2.8s ease-in-out infinite;}
+@keyframes dealerBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+#dealerArmR{transform-origin:34px 38px;transition:transform 0s;}
+#dealerArmR.swing{animation:armSwing 0.45s ease-in-out;}
+@keyframes armSwing{0%{transform:rotate(0)}35%{transform:rotate(-38deg)}100%{transform:rotate(0)}}
+.fly-card{
+  position:fixed;z-index:999;pointer-events:none;
+  width:26px;height:38px;
+  background:var(--fc-bg,#fffef8);
+  border-radius:4px;border:1px solid var(--fc-bdr,#e0d8c8);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;
+  box-shadow:1px 2px 6px rgba(0,0,0,.55);
+  animation:flyToPlayer var(--fly-dur,.7s) cubic-bezier(.25,.46,.45,.94) both;
+}
+@keyframes flyToPlayer{
+  0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);}
+  45%{opacity:1;transform:translate(var(--tx45),var(--ty45)) rotate(var(--tr45)) scale(0.88);}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--tr)) scale(0.82);}
+}
 .pot-wrap{text-align:center;z-index:2;}
 .pot-lbl{font-size:10px;color:var(--ivd);letter-spacing:2px;text-transform:uppercase;}
 .pot-num{font-size:25px;color:var(--gold);font-weight:700;
@@ -222,47 +242,57 @@ select.fi{appearance:none;cursor:pointer;}
 
 /* CARDS */
 .card{
-  width:42px;height:62px;background:#fffef8;border-radius:6px;
-  box-shadow:2px 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.9);
-  flex-shrink:0;border:1px solid #ddd;
-  position:relative;display:flex;align-items:center;justify-content:center;
-  font-family:Georgia,serif;}
+  width:42px;height:62px;
+  background:linear-gradient(160deg,#ffffff 0%,#f8f6f0 100%);
+  border-radius:6px;
+  box-shadow:1px 2px 6px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,1);
+  flex-shrink:0;border:1px solid #e0d8c8;
+  position:relative;
+  font-family:'Georgia',serif;
+}
 .card-lg{width:56px;height:80px;border-radius:7px;}
-.card.rc{color:var(--rc);}
-.card.bk{color:var(--bc);}
-.card .ctl{position:absolute;top:4px;left:5px;display:flex;flex-direction:column;align-items:center;line-height:1;}
-.card .cbr{position:absolute;bottom:4px;right:5px;display:flex;flex-direction:column;align-items:center;line-height:1;transform:rotate(180deg);}
-.card .ctl .rk,.card .cbr .rk{font-size:12px;font-weight:700;}
-.card .ctl .st,.card .cbr .st{font-size:9px;}
-.card-lg .ctl .rk,.card-lg .cbr .rk{font-size:14px;}
-.card-lg .ctl .st,.card-lg .cbr .st{font-size:11px;}
-.card .ctr{font-size:22px;line-height:1;}
-.card-lg .ctr{font-size:28px;}
-.card .cface{display:flex;flex-direction:column;align-items:center;gap:0;}
-.card .cface .fr{font-size:18px;font-weight:700;line-height:1;}
-.card .cface .fs{font-size:13px;line-height:1;margin-top:1px;}
-.card-lg .cface .fr{font-size:22px;}
-.card-lg .cface .fs{font-size:16px;}
-.card.back{background:linear-gradient(135deg,#1a3a8a,#0d2461);border-color:#1a3a8a;overflow:hidden;}
-.card.back::before{content:'';position:absolute;inset:4px;border:1px solid rgba(255,255,255,.18);
-  border-radius:4px;background:repeating-linear-gradient(45deg,transparent,transparent 3px,
-  rgba(255,255,255,.05) 3px,rgba(255,255,255,.05) 4px);}
-.peek-wrap{position:relative;display:inline-flex;flex-shrink:0;width:56px;height:80px;}
-.peek-wrap-sm{width:42px;height:62px;}
-.peek-cover{position:absolute;top:0;left:0;width:100%;height:100%;
-  cursor:grab;touch-action:none;z-index:5;border-radius:7px;}
-.peek-cover:active{cursor:grabbing;}
-.peek-cover.lifted{box-shadow:4px 8px 20px rgba(0,0,0,.75),0 0 12px rgba(232,196,74,.3);}
-.peek-hint{position:absolute;inset:0;border-radius:7px;
-  border:1.5px dashed rgba(232,196,74,.6);
-  pointer-events:none;z-index:6;animation:phint 1.8s ease-in-out infinite;}
-@keyframes phint{0%,100%{opacity:.3}50%{opacity:.85}}
-.hole-lbl{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);
-  font-size:9px;color:rgba(232,196,74,.85);white-space:nowrap;pointer-events:none;z-index:2;}
-.up-lbl{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);
-  font-size:9px;color:rgba(245,238,216,.3);white-space:nowrap;pointer-events:none;z-index:2;}
-.card.dealing{animation:dealCard .38s cubic-bezier(.25,.46,.45,.94) both;}
-@keyframes dealCard{from{transform:scale(.3) translateY(-50px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
+.card.rc{color:#c0392b;}
+.card.bk{color:#1a1a2e;}
+.card.back{
+  background:linear-gradient(135deg,#1e3c8a 0%,#0d2461 100%);
+  border:1px solid #2a4fa0;overflow:hidden;
+}
+.card.back::after{
+  content:'';position:absolute;inset:4px;
+  border:1px solid rgba(255,255,255,.2);border-radius:3px;
+  background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 6px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 6px);
+}
+.card .ctl{position:absolute;top:3px;left:4px;display:flex;flex-direction:column;align-items:center;line-height:1.15;}
+.card .cbr{position:absolute;bottom:3px;right:4px;display:flex;flex-direction:column;align-items:center;line-height:1.15;transform:rotate(180deg);}
+.card .ctl .rk,.card .cbr .rk{font-size:13px;font-weight:700;letter-spacing:-0.5px;}
+.card .ctl .st,.card .cbr .st{font-size:10px;margin-top:-1px;}
+.card-lg .ctl .rk,.card-lg .cbr .rk{font-size:16px;}
+.card-lg .ctl .st,.card-lg .cbr .st{font-size:13px;}
+.card .ctr{
+  font-size:17px;line-height:1;
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  opacity:0.55;
+}
+.card-lg .ctr{font-size:22px;}
+.card .cface{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+}
+.card .cface .fr{font-size:15px;font-weight:700;line-height:1;opacity:0.8;}
+.card .cface .fs{font-size:11px;line-height:1;opacity:0.6;}
+.card-lg .cface .fr{font-size:19px;}
+.card-lg .cface .fs{font-size:13px;}
+.card.dealing{animation:dealCard .65s cubic-bezier(.25,.46,.45,.94) both;}
+@keyframes dealCard{
+  0%{transform:scale(.15) translate(-80px,-120px) rotate(-20deg);opacity:0;}
+  50%{transform:scale(.7) translate(-20px,-30px) rotate(-5deg);opacity:.8;}
+  80%{transform:scale(1.05) translate(3px,3px) rotate(1deg);opacity:1;}
+  100%{transform:scale(1) translate(0,0) rotate(0deg);opacity:1;}
+}
 .card.flipping{animation:flipCard .45s ease both;}
 @keyframes flipCard{0%{transform:scaleX(1)}50%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 .card.win-glow{box-shadow:2px 3px 8px rgba(0,0,0,.55),0 0 18px rgba(93,223,138,.7);
@@ -349,6 +379,10 @@ select.fi{appearance:none;cursor:pointer;}
 .cbtn{background:rgba(232,196,74,.1);border:1px solid var(--bdr);color:var(--gold);
   border-radius:7px;padding:9px;cursor:pointer;font-size:14px;font-family:inherit;}
 
+.loan-record{background:rgba(232,196,74,.08);border:1px solid var(--bdr);
+  border-radius:7px;padding:6px 10px;margin-bottom:5px;font-size:12px;color:var(--ivd);}
+.loan-record .lr-name{color:var(--gold);font-weight:700;}
+.loan-record .lr-amt{color:var(--green-ok);}
 .toast{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,.88);color:var(--iv);padding:8px 15px;border-radius:15px;
   font-size:12px;z-index:1000;border:1px solid var(--bdr);
@@ -473,7 +507,31 @@ select.fi{appearance:none;cursor:pointer;}
   <div class="gtable">
     <div class="opp-zone"><div class="opp-row" id="oppRow"></div></div>
     <div class="table-oval" id="tableOval">
-      <div class="deck-vis"><div class="dc"></div><div class="dc"></div><div class="dc"></div></div>
+      <div class="dealer-container" id="dealerContainer">
+  <svg class="dealer-svg" id="dealerSvg" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <g class="dealer-body-g">
+      <rect x="22" y="38" width="36" height="34" rx="6" fill="#1a1a2e"/>
+      <rect x="32" y="38" width="16" height="20" rx="2" fill="#f0ead0"/>
+      <polygon points="36,42 40,45 44,42 40,39" fill="#c0392b"/>
+      <path d="M22,38 L32,50 L32,38 Z" fill="#2a2a4e"/>
+      <path d="M58,38 L48,50 L48,38 Z" fill="#2a2a4e"/>
+      <circle cx="40" cy="26" r="14" fill="#d4a574"/>
+      <path d="M26,22 Q30,10 40,12 Q50,10 54,22" fill="#3d2b1f"/>
+      <circle cx="36" cy="25" r="2" fill="#3d2b1f"/>
+      <circle cx="44" cy="25" r="2" fill="#3d2b1f"/>
+      <path d="M35,31 Q40,35 45,31" stroke="#3d2b1f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <rect x="28" y="50" width="24" height="10" rx="3" fill="#e8c44a"/>
+      <text x="40" y="58" text-anchor="middle" font-size="6" font-weight="700" fill="#1a0f00" font-family="Georgia,serif">DEALER</text>
+      <rect x="8" y="38" width="14" height="8" rx="4" fill="#1a1a2e" transform="rotate(20,15,42)"/>
+      <circle cx="11" cy="46" r="5" fill="#d4a574"/>
+      <g id="dealerArmR">
+        <rect x="58" y="38" width="14" height="8" rx="4" fill="#1a1a2e" transform="rotate(-20,65,42)"/>
+        <circle cx="69" cy="46" r="5" fill="#d4a574"/>
+        <rect id="dealerHandCard" x="66" y="40" width="10" height="14" rx="2" fill="#1e3c8a" stroke="#2a4fa0" stroke-width="0.5"/>
+      </g>
+    </g>
+  </svg>
+</div>
       <div class="pot-wrap">
         <div class="pot-lbl">底　池</div>
         <div class="pot-num" id="potNum">0</div>
@@ -530,8 +588,13 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="wcards" id="wCards"></div>
     <div class="wamt" id="wAmt"></div>
     <div class="whand" id="wHand"></div>
-    <button class="btn btn-g" id="nextRoundBtn" style="margin-bottom:6px;">下一局</button>
-    <button class="btn btn-o" id="addChipsBtn">+ 补充筹码</button>
+    <div id="loanSection" style="margin-bottom:10px;">
+      <button class="btn btn-o" id="addChipsBtn" style="margin-bottom:6px;">+ 补充筹码</button>
+      <button class="btn btn-o" id="loanBtn">💰 借筹码</button>
+    </div>
+    <button class="btn btn-g" id="readyNextBtn">✓ 准备下一局</button>
+    <button class="btn btn-g" id="nextRoundBtn" style="display:none;margin-top:6px;">▶ 开始下一局</button>
+    <div id="readyStatus" style="font-size:12px;color:var(--ivd);margin-top:8px;"></div>
   </div>
 </div>
 
@@ -549,11 +612,29 @@ select.fi{appearance:none;cursor:pointer;}
   </div>
 </div>
 
+<!-- LOAN MODAL -->
+<div id="loanModal" class="chip-modal" style="display:none;">
+  <div class="chip-box" style="width:300px;">
+    <h3>💰 借筹码</h3>
+    <p style="font-size:12px;color:var(--ivd);margin-bottom:10px;">借出的筹码会公开记录</p>
+    <label class="fl" style="text-align:left;display:block;margin-bottom:5px;">借给谁</label>
+    <select id="loanTarget" class="fi" style="margin-bottom:10px;width:100%;"></select>
+    <label class="fl" style="text-align:left;display:block;margin-bottom:7px;">借多少筹码</label>
+    <div class="chip-grid">
+      <button class="cbtn" onclick="confirmLoan(500)">500</button>
+      <button class="cbtn" onclick="confirmLoan(1000)">1000</button>
+      <button class="cbtn" onclick="confirmLoan(2000)">2000</button>
+      <button class="cbtn" onclick="confirmLoan(5000)">5000</button>
+    </div>
+    <button class="btn-dsm" onclick="document.getElementById('loanModal').style.display='none'" style="margin-top:8px;width:100%;">取消</button>
+  </div>
+</div>
 <!-- RECORDS -->
 <div id="recPanel" class="panel-full" style="display:none;">
   <div class="panel-inner">
     <h2>📊 战绩统计</h2>
     <div id="statsGrid" class="stats-grid"></div>
+    <div class="rsec"><h3>借筹码记录</h3><div id="loanList"><p style="font-size:12px;color:var(--ivd);text-align:center;padding:8px;">暂无借款记录</p></div></div>
     <div class="rsec"><h3>对局记录（最近20局）</h3><div id="recList"></div></div>
     <button class="btn btn-o" id="closeRecBtn" style="margin-top:7px;">关闭</button>
   </div>
@@ -814,7 +895,20 @@ function evalHand(cards, minCard) {
   const wheel = sorted[0] === 14 && sorted[1] === minV + 3 && sorted[2] === minV + 2
     && sorted[3] === minV + 1 && sorted[4] === minV;
   const isStraight = straight || wheel;
-  const tb = wheel ? [sorted[1], sorted[2], sorted[3], sorted[4], 1] : sorted;
+  // Build proper tiebreak: group by count desc, then rank desc within group
+  let tb;
+  if (wheel) {
+    tb = [sorted[1], sorted[2], sorted[3], sorted[4], 1];
+  } else if (score >= 1 && score <= 3) {
+    // For pairs/two-pair/trips: sort by count desc, then rank desc
+    const groups = Object.entries(cnt)
+      .map(([r,c]) => ({r:parseInt(r),c}))
+      .sort((a,b) => b.c - a.c || b.r - a.r);
+    tb = [];
+    groups.forEach(g => { for(let i=0;i<g.c;i++) tb.push(g.r); });
+  } else {
+    tb = sorted;
+  }
 
   let score, name;
   if (flush && isStraight) { score = 8; name = '同花顺'; }
@@ -843,21 +937,22 @@ function evalHand(cards, minCard) {
 
 // 构建与点数 tiebreak 平行的花色 tiebreak
 function buildSuitTiebreak(cards, tb, cnt) {
-  // group cards by rank value
+  // Group cards by rank value, suits sorted desc
   const byRank = {};
   cards.forEach(c => {
     const v = RV[c.r];
     if (!byRank[v]) byRank[v] = [];
     byRank[v].push(SUIT_VAL[c.s]);
   });
-  // for each value in tb, pop the highest suit of that rank
-  const used = {};
+  Object.values(byRank).forEach(arr => arr.sort((a,b) => b-a));
+  // For each position in tiebreak array, pick highest suit of that rank (in order)
+  const usedCount = {};
   return tb.map(v => {
-    if (!byRank[v] || byRank[v].length === 0) return 0;
-    // sort desc and pick highest unused
-    byRank[v].sort((a, b) => b - a);
-    const suit = byRank[v].shift();
-    return suit;
+    const arr = byRank[v];
+    if (!arr) return 0;
+    const idx = usedCount[v] || 0;
+    usedCount[v] = idx + 1;
+    return arr[idx] || 0;
   });
 }
 
@@ -895,15 +990,58 @@ function animDeal(container, cards, isMe) {
   cards.forEach((c, i) => {
     const w = document.createElement('div');
     w.style.cssText = 'display:inline-block;opacity:0;';
-    w.innerHTML = isMe ? mkCard(c, false, true, 'dealing') : mkCard(null, true, false, 'dealing');
+    w.innerHTML = isMe ? mkCard(c, false, true) : mkCard(null, true, false);
     container.appendChild(w);
-    setTimeout(() => {
-      w.style.opacity = '1';
-      const card = w.querySelector('.card');
-      if (card) card.style.animationDelay = `${i * 0.1}s`;
-    }, i * 130);
+    setTimeout(() => { w.style.opacity = '1'; }, i * 220 + 300);
   });
 }
+
+function dealerFlyCard(cardData, targetEl, isHole, delayMs) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const arm = document.getElementById('dealerArmR');
+      if (arm) {
+        arm.classList.remove('swing');
+        void arm.offsetWidth;
+        arm.classList.add('swing');
+        setTimeout(() => arm.classList.remove('swing'), 500);
+      }
+      const dealerEl = document.getElementById('dealerContainer');
+      const targetRect = targetEl ? targetEl.getBoundingClientRect() : null;
+      const dealerRect = dealerEl ? dealerEl.getBoundingClientRect() : null;
+      if (!dealerRect || !targetRect) { resolve(); return; }
+      const sx = dealerRect.left + dealerRect.width * 0.85;
+      const sy = dealerRect.top + dealerRect.height * 0.55;
+      const tx = targetRect.left + targetRect.width/2 - sx;
+      const ty = targetRect.top + targetRect.height/2 - sy;
+      const mx = tx * 0.4;
+      const my = ty * 0.3 - 35;
+      const rot = tx > 0 ? 12 : -12;
+      const fc = document.createElement('div');
+      fc.className = 'fly-card';
+      if (isHole) {
+        fc.style.setProperty('--fc-bg', '#1e3c8a');
+        fc.style.setProperty('--fc-bdr', '#2a4fa0');
+      } else if (cardData) {
+        const isRed = ['♥','♦'].includes(cardData.s);
+        fc.style.color = isRed ? '#c0392b' : '#1a1a2e';
+        fc.textContent = (cardData.r||'') + (cardData.s||'');
+      }
+      fc.style.left = (sx - 13) + 'px';
+      fc.style.top  = (sy - 19) + 'px';
+      fc.style.setProperty('--tx45', mx + 'px');
+      fc.style.setProperty('--ty45', my + 'px');
+      fc.style.setProperty('--tr45', (rot * 0.5) + 'deg');
+      fc.style.setProperty('--tx', tx + 'px');
+      fc.style.setProperty('--ty', ty + 'px');
+      fc.style.setProperty('--tr', rot + 'deg');
+      fc.style.setProperty('--fly-dur', '0.65s');
+      document.body.appendChild(fc);
+      setTimeout(() => { fc.remove(); resolve(); }, 700);
+    }, delayMs);
+  });
+}
+
 
 function chipFly(fromEl, toEl, amount, n = 3) {
   const fr = fromEl.getBoundingClientRect();
@@ -1024,6 +1162,8 @@ function renderRecs() {
       <div class="sdelta" style="color:${s.wins>0?'var(--green-ok)':'var(--ivd)'}">${s.wins}胜</div>`;
     grid.appendChild(d);
   });
+  // Render loan list too
+  if (gs) renderLoanList(gs);
   const list = document.getElementById('recList'); list.innerHTML = '';
   if (!recs.length) {
     list.innerHTML = '<p style="font-size:12px;color:var(--ivd);text-align:center;padding:10px;">暂无记录</p>';
@@ -1173,6 +1313,7 @@ function startNewRound(s) {
   s.pot = 0; s.currentBet = 0; s.roundActions = 0; s.winner = null;
   s.street = 1; // current street 1-4
   s.bettingDone = false;
+  revealedHoles.clear(); // reset revealed holes for new round
   s.players.forEach(p => {
     p.hand = [null, null, null, null, null]; // 5 slots, null=not dealt yet
     p.bet = 0; p.roundBet = 0; p.folded = false;
@@ -1196,8 +1337,28 @@ function startNewRound(s) {
   gs = s;
   wsPushState(s);
   show('gameScreen');
-  showBanner('第1轮发牌', 900);
-  setTimeout(() => renderGame(s, true), 350);
+  showBanner('第1轮发牌', 800);
+  setTimeout(async () => {
+    const myIdx = s.players.findIndex(p => p.id === myId);
+    const myHandEl = document.getElementById('myHand');
+    const slots = STREET_DEAL[1]; // [0,1]
+    for (const cardIdx of slots) {
+      const isHole = cardIdx === 0 || cardIdx === 4;
+      for (let pi = 0; pi < s.players.length; pi++) {
+        const p = s.players[pi];
+        if (p.folded) continue;
+        const isMine = p.id === myId;
+        const targetEl = isMine
+          ? myHandEl
+          : document.getElementById('opp_' + p.id);
+        const card = p.hand[cardIdx];
+        await dealerFlyCard(isMine && !isHole ? card : null, targetEl, isHole, 0);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      await new Promise(r => setTimeout(r, 120));
+    }
+    renderGame(s, true);
+  }, 400);
 }
 
 function dealStreetCards(s, street) {
@@ -1331,28 +1492,48 @@ function calcSidePots(players) {
 }
 
 // ── Peek drag interaction ──────────────────────────────────────
-function setupPeekDrag(coverEl) {
-  let startX = 0, startY = 0, curX = 0, curY = 0, active = false;
-  const MAX = 64;
+function setupPeekDrag(coverEl, onReveal) {
+  let startX = 0, startY = 0, active = false, revealed = false;
+  const REVEAL_DIST = 30; // drag this far to reveal
 
   function onStart(e) {
+    if (revealed) return;
     active = true;
-    startX = e.clientX - curX;
-    startY = e.clientY - curY;
-    coverEl.classList.add('lifted');
+    startX = e.clientX;
+    startY = e.clientY;
+    coverEl.style.cursor = 'grabbing';
     coverEl.setPointerCapture(e.pointerId);
     e.preventDefault();
     e.stopPropagation();
   }
 
   function onMove(e) {
-    if (!active) return;
-    let dx = e.clientX - startX;
-    let dy = e.clientY - startY;
+    if (!active || revealed) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
     const d = Math.sqrt(dx*dx + dy*dy);
-    if (d > MAX) { const r = MAX/d; dx*=r; dy*=r; }
-    curX = dx; curY = dy;
-    coverEl.style.transform = `translate(${dx}px,${dy}px) rotate(${dx*0.1}deg)`;
+    // Move cover with finger
+    coverEl.style.transform = `translate(${dx}px,${dy}px) rotate(${dx*0.08}deg)`;
+    // If dragged far enough, reveal
+    if (d > REVEAL_DIST) {
+      revealed = true;
+      active = false;
+      if (onReveal) onReveal();
+      // Fly away and disappear
+      coverEl.style.transition = 'transform 0.35s ease-out, opacity 0.35s ease-out';
+      const angle = Math.atan2(dy, dx);
+      const flyX = Math.cos(angle) * 120;
+      const flyY = Math.sin(angle) * 120;
+      coverEl.style.transform = `translate(${flyX}px,${flyY}px) rotate(${dx*0.3}deg) scale(0.6)`;
+      coverEl.style.opacity = '0';
+      // Remove cover after animation
+      setTimeout(() => {
+        coverEl.style.display = 'none';
+        // Also hide the hint ring (sibling)
+        const hint = coverEl.nextSibling;
+        if (hint) hint.style.display = 'none';
+      }, 380);
+    }
     e.preventDefault();
     e.stopPropagation();
   }
@@ -1360,53 +1541,107 @@ function setupPeekDrag(coverEl) {
   function onEnd(e) {
     if (!active) return;
     active = false;
-    coverEl.classList.remove('lifted');
-    coverEl.style.transition = 'transform 0.4s cubic-bezier(.34,1.56,.64,1)';
-    coverEl.style.transform = '';
-    curX = 0; curY = 0;
-    setTimeout(() => { coverEl.style.transition = ''; }, 420);
+    if (!revealed) {
+      // Snap back if not revealed
+      coverEl.style.cursor = 'grab';
+      coverEl.style.transition = 'transform 0.3s cubic-bezier(.34,1.56,.64,1)';
+      coverEl.style.transform = '';
+      setTimeout(() => { coverEl.style.transition = ''; }, 320);
+    }
   }
 
-  // Use Pointer Events API — works for both mouse and touch, no passive issues
-  coverEl.addEventListener('pointerdown', onStart, { passive: false });
-  coverEl.addEventListener('pointermove', onMove,  { passive: false });
-  coverEl.addEventListener('pointerup',   onEnd);
+  coverEl.addEventListener('pointerdown',   onStart, { passive: false });
+  coverEl.addEventListener('pointermove',   onMove,  { passive: false });
+  coverEl.addEventListener('pointerup',     onEnd);
   coverEl.addEventListener('pointercancel', onEnd);
 }
 
-function makePeekCard(frontCard, lg, withDeal, dealDelay) {
+function makePeekCard(frontCard, lg, withDeal, dealDelay, holeIdx) {
   const cardW = lg ? 56 : 42;
   const cardH = lg ? 80 : 62;
-  const wrap = document.createElement('div');
-  wrap.className = 'peek-wrap' + (lg ? '' : ' peek-wrap-sm');
-  wrap.style.cssText = `width:${cardW}px;height:${cardH}px;position:relative;display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;`;
+  const alreadyRevealed = revealedHoles.has(holeIdx);
 
-  // front card sits at position 0,0
+  // Simple outer wrapper — explicit block size, relative positioning
+  const wrap = document.createElement('div');
+  wrap.style.cssText = [
+    'position:relative',
+    `width:${cardW}px`,
+    `height:${cardH}px`,
+    'display:inline-block',
+    'flex-shrink:0',
+    'vertical-align:top'
+  ].join(';') + ';';
+
+  // Front card — fills the wrap exactly
   const frontEl = document.createElement('div');
   frontEl.style.cssText = `position:absolute;top:0;left:0;width:${cardW}px;height:${cardH}px;z-index:1;`;
   frontEl.innerHTML = frontCard;
+  // Make sure the inner card also has explicit size
+  const innerCard = frontEl.querySelector('.card');
+  if (innerCard) {
+    innerCard.style.cssText += `;width:${cardW}px;height:${cardH}px;`;
+  }
   wrap.appendChild(frontEl);
 
-  // cover (back card) on top — exact same size
-  const sz = lg ? 'card card-lg' : 'card';
-  const cover = document.createElement('div');
-  cover.className = `${sz} back peek-cover${withDeal ? ' dealing' : ''}`;
-  cover.style.cssText = `position:absolute;top:0;left:0;width:${cardW}px;height:${cardH}px;z-index:5;cursor:grab;touch-action:none;`;
-  if (withDeal) cover.style.animationDelay = dealDelay + 's';
-  wrap.appendChild(cover);
+  // Cover — same size, sits on top (skip if already revealed)
+  if (!alreadyRevealed) {
+    // Custom "搓牌" cover — not a card, just an overlay pattern
+    const cover = document.createElement('div');
+    cover.style.cssText = [
+      'position:absolute',
+      'top:0', 'left:0',
+      `width:${cardW}px`,
+      `height:${cardH}px`,
+      'z-index:5',
+      'cursor:grab',
+      'touch-action:none',
+      'box-sizing:border-box',
+      'border-radius:6px',
+      'background:linear-gradient(145deg,#1a3a2a 0%,#0d2418 60%,#1a3a2a 100%)',
+      'border:1.5px solid rgba(232,196,74,0.5)',
+      'display:flex',
+      'flex-direction:column',
+      'align-items:center',
+      'justify-content:center',
+      'gap:2px',
+      'animation:phint 2s ease-in-out infinite',
+    ].join(';') + ';';
 
-  // hint ring
-  const hint = document.createElement('div');
-  hint.className = 'peek-hint';
-  wrap.appendChild(hint);
+    // Pattern lines (like card back texture)
+    const pat = document.createElement('div');
+    pat.style.cssText = [
+      'position:absolute','inset:3px','border-radius:4px',
+      'background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(232,196,74,0.06) 3px,rgba(232,196,74,0.06) 4px)',
+      'pointer-events:none',
+    ].join(';') + ';';
+    cover.appendChild(pat);
 
-  // label below
-  const lbl = document.createElement('div');
-  lbl.className = 'hole-lbl';
-  lbl.textContent = '暗牌·按住拖动';
-  wrap.appendChild(lbl);
+    // Suit icon
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size:' + (lg ? '18px' : '14px') + ';line-height:1;position:relative;z-index:1;';
+    icon.textContent = '♠';
+    cover.appendChild(icon);
 
-  setupPeekDrag(cover);
+    // 搓牌 text
+    const txt = document.createElement('div');
+    txt.style.cssText = [
+      'font-size:' + (lg ? '10px' : '8px'),
+      'color:rgba(232,196,74,0.9)',
+      'letter-spacing:1px',
+      'font-family:Georgia,serif',
+      'position:relative',
+      'z-index:1',
+      'font-weight:700',
+    ].join(';') + ';';
+    txt.textContent = '搓牌';
+    cover.appendChild(txt);
+
+    if (withDeal) cover.style.animationDelay = dealDelay + 's';
+    wrap.appendChild(cover);
+
+    // Track reveal in the drag handler
+    setupPeekDrag(cover, () => revealedHoles.add(holeIdx));
+  }
   return wrap;
 }
 
@@ -1458,11 +1693,19 @@ function renderGame(s, withDeal) {
       cardsHtml = '<span style="font-size:10px;opacity:.28">等待发牌</span>';
     }
     const isDealer = i === 0; // after rotation, player[0] is dealer
+    // Calculate hand rank for showdown display
+    let handRankHtml = '';
+    if (isShowdown && !p.folded && p.hand && p.hand.filter(c=>c).length === 5) {
+      const ev = evalHand(p.hand.filter(c=>c), s.minCard||7);
+      const isWinner = s.winner && s.winner.playerId === p.id;
+      handRankHtml = `<div class="opp-hand-rank${isWinner?' opp-winner-rank':''}">${ev.name}</div>`;
+    }
     d.innerHTML = `<div class="opp-n">${p.isHost?'👑':''}${isDealer?'🎰 ':''}${p.name}${isT?' ◀':''}</div>
       <div class="opp-c">${p.chips}筹码</div>
       <div class="opp-cards">${cardsHtml}</div>
       <div class="opp-bet">${p.bet>0?'下注:'+p.bet:''}</div>
-      <div class="opp-status">${p.folded?'弃牌':''}</div>`;
+      <div class="opp-status">${p.folded?'弃牌':''}</div>
+      ${handRankHtml}`;
     oppRow.appendChild(d);
   });
 
@@ -1492,12 +1735,11 @@ function renderGame(s, withDeal) {
         (myP.hand || []).forEach((c, ci) => {
           if (c === null) return;
           const isHole = ci === 0 || ci === 4;
-          console.log('[card]', ci, isHole, c ? c.r+c.s : 'null');
           const dealDelay = ci * 0.12;
           if (isHole) {
             // peek widget: draggable cover over real card
             const frontHtml = mkCard(c, false, true);
-            const pw = makePeekCard(frontHtml, true, withDeal, dealDelay);
+            const pw = makePeekCard(frontHtml, true, withDeal, dealDelay, ci);
             pw.style.marginBottom = '16px';
             myHandEl.appendChild(pw);
           } else {
@@ -1522,9 +1764,13 @@ function renderGame(s, withDeal) {
     document.getElementById('myBetShow').textContent = myP.bet > 0 ? `本轮下注: ${myP.bet}` : '';
     const rkEl = document.getElementById('myRank');
     const realCards = (myP.hand || []).filter(c => c !== null);
-    if (realCards.length === 5 && s.phase !== 'lobby') {
-      const ev = evalHand(realCards, s.minCard || 7);
-      rkEl.style.display = 'block'; rkEl.querySelector('span').textContent = ev.name;
+    if (realCards.length >= 2 && s.phase !== 'lobby') {
+      const ev = evalHand(realCards.length >= 5 ? realCards : [...realCards, ...Array(5-realCards.length).fill({r:'2',s:'♠'})], s.minCard || 7);
+      rkEl.style.display = 'block';
+      const isMyWin = s.phase === 'showdown' && s.winner && s.winner.playerId === myId;
+      rkEl.querySelector('span').textContent = realCards.length === 5 ? ev.name : `${ev.name}（${realCards.length}张）`;
+      rkEl.querySelector('span').style.color = isMyWin ? 'var(--green-ok)' : 'var(--gold)';
+      rkEl.querySelector('span').style.fontWeight = isMyWin ? '700' : 'normal';
     } else rkEl.style.display = 'none';
 
     const capHit = (cap > 0 && s.pot >= cap) || (capPer > 0 && (myP.bet||0) >= capPer);
@@ -1583,7 +1829,14 @@ function showWinModal(s) {
   document.getElementById('wAmt').textContent  = '+' + w.pot + ' 筹码';
   document.getElementById('wHand').textContent = '牌型：' + w.handName;
   document.getElementById('wCards').innerHTML  = (w.cards || []).map(c => mkCard(c, false, true, 'win-glow')).join('');
-  document.getElementById('nextRoundBtn').style.display = isHost ? 'block' : 'none';
+  // Reset ready state for this player
+  const readyBtn = document.getElementById('readyNextBtn');
+  readyBtn.disabled = false;
+  readyBtn.textContent = '✓ 准备下一局';
+  document.getElementById('nextRoundBtn').style.display = 'none';
+  updateNextReadyStatus(s);
+  // Show loan list if any
+  renderLoanList(s);
   document.getElementById('winModal').style.display = 'flex';
   const oval = document.getElementById('tableOval');
   const r = oval.getBoundingClientRect();
@@ -1721,9 +1974,26 @@ function advanceTurn(s) {
     s.currentTurn = findFirstBetter(s);
     const streetNames = ['','第1轮','第2轮','第3轮','第4轮（最后一张暗牌）'];
     s.log.push(streetNames[s.street] + ' 发牌');
-    showBanner(streetNames[s.street] + ' 发牌', 800);
+    showBanner(streetNames[s.street] + ' 发牌', 700);
     s.ts = Date.now(); gs = s; wsPushState(s);
-    setTimeout(() => renderGame(s, true), 300);
+    // Fly cards for this street
+    setTimeout(async () => {
+      const slots = STREET_DEAL[s.street];
+      for (const cardIdx of slots) {
+        const isHole = cardIdx === 0 || cardIdx === 4;
+        for (let pi = 0; pi < s.players.length; pi++) {
+          const p = s.players[pi];
+          if (p.folded) continue;
+          const isMine = p.id === myId;
+          const targetEl = isMine
+            ? document.getElementById('myHand')
+            : document.getElementById('opp_' + p.id);
+          await dealerFlyCard(isMine && !isHole ? p.hand[cardIdx] : null, targetEl, isHole, 0);
+          await new Promise(r => setTimeout(r, 90));
+        }
+      }
+      renderGame(s, true);
+    }, 200);
     return;
   }
   let next = (s.currentTurn + 1) % s.players.length, t = 0;
@@ -1768,18 +2038,31 @@ function doShowdown(s) {
   s.ts = Date.now(); gs = s; wsPushState(s);
 }
 
+// ── Ready-for-next-round system ────────────────────────────────
+document.getElementById('readyNextBtn').onclick = () => {
+  if (!gs) return;
+  const s = JSON.parse(JSON.stringify(gs));
+  if (!s.nextReadyPlayers) s.nextReadyPlayers = [];
+  if (!s.nextReadyPlayers.includes(myId)) {
+    s.nextReadyPlayers.push(myId);
+  }
+  s.ts = Date.now(); gs = s; wsPushState(s);
+  document.getElementById('readyNextBtn').disabled = true;
+  document.getElementById('readyNextBtn').textContent = '✓ 已准备';
+  updateNextReadyStatus(s);
+};
+
 document.getElementById('nextRoundBtn').onclick = () => {
   if (!isHost || !gs) return;
   document.getElementById('winModal').style.display = 'none';
   lastWinTs = 0;
   clearCountdown();
   const s = JSON.parse(JSON.stringify(gs));
+  s.nextReadyPlayers = [];
   s.round++; s.phase = 'playing'; s.winner = null;
-  // Keep observers (chips=0) as observers, remove only if they have no chips AND aren't observing
   const activePlayers = s.players.filter(p => p.chips > 0);
   if (activePlayers.length < 2) { toast('筹码不足，游戏结束'); show('homeScreen'); return; }
   s.players = activePlayers;
-  // Rotate dealer: move first player to end so deal order shifts
   dealerIdx = (dealerIdx + 1) % s.players.length;
   const rotated = [...s.players.slice(dealerIdx), ...s.players.slice(0, dealerIdx)];
   s.players = rotated;
@@ -1787,6 +2070,24 @@ document.getElementById('nextRoundBtn').onclick = () => {
   s.ts = Date.now(); gs = s;
   startNewRound(s);
 };
+
+function updateNextReadyStatus(s) {
+  const total = s.players?.length || 0;
+  const ready = (s.nextReadyPlayers || []).length;
+  const statusEl = document.getElementById('readyStatus');
+  const nextBtn = document.getElementById('nextRoundBtn');
+  const readyBtn = document.getElementById('readyNextBtn');
+  if (!statusEl) return;
+  statusEl.textContent = `${ready} / ${total} 人准备好了`;
+  const allReady = ready >= total;
+  if (isHost && nextBtn) {
+    nextBtn.style.display = allReady ? 'block' : 'none';
+  }
+  if (readyBtn && (s.nextReadyPlayers||[]).includes(myId)) {
+    readyBtn.disabled = true;
+    readyBtn.textContent = '✓ 已准备';
+  }
+}
 document.getElementById('addChipsBtn').onclick = () => {
   document.getElementById('winModal').style.display = 'none';
   document.getElementById('chipModal').style.display = 'flex';
@@ -1799,6 +2100,59 @@ function addChips(amount) {
   p.chips += amount; s.ts = Date.now(); gs = s; wsPushState(s); toast(`+${amount}筹码已到账`);
 }
 window.addChips = addChips;
+
+// ── Loan system ──────────────────────────────────────────────────
+document.getElementById('loanBtn').onclick = () => {
+  document.getElementById('winModal').style.display = 'none';
+  if (!gs) return;
+  // Populate target select
+  const sel = document.getElementById('loanTarget');
+  sel.innerHTML = '';
+  gs.players.filter(p => p.id !== myId).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name + ' (' + p.chips + '筹码)';
+    sel.appendChild(opt);
+  });
+  document.getElementById('loanModal').style.display = 'flex';
+};
+
+function confirmLoan(amount) {
+  document.getElementById('loanModal').style.display = 'none';
+  if (!gs) return;
+  const targetId = document.getElementById('loanTarget').value;
+  const s = JSON.parse(JSON.stringify(gs));
+  const fromP = s.players.find(p => p.id === myId);
+  const toP = s.players.find(p => p.id === targetId);
+  if (!fromP || !toP) return;
+  // Record loan
+  const loan = { from: fromP.name, to: toP.name, amount, round: s.round, ts: Date.now() };
+  if (!s.loans) s.loans = [];
+  s.loans.push(loan);
+  // Transfer chips
+  toP.chips += amount;
+  s.ts = Date.now(); gs = s; wsPushState(s);
+  toast(`已借给 ${toP.name} ${amount} 筹码`);
+  renderLoanList(s);
+}
+window.confirmLoan = confirmLoan;
+
+function renderLoanList(s) {
+  const loans = s.loans || [];
+  const el = document.getElementById('loanList');
+  if (!el) return;
+  if (!loans.length) {
+    el.innerHTML = '<p style="font-size:12px;color:var(--ivd);text-align:center;padding:8px;">暂无借款记录</p>';
+    return;
+  }
+  el.innerHTML = '';
+  [...loans].reverse().forEach(l => {
+    const d = document.createElement('div');
+    d.className = 'loan-record';
+    const dt = new Date(l.ts).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    d.innerHTML = `<span class="lr-name">${l.from}</span> 借给 <span class="lr-name">${l.to}</span> <span class="lr-amt">+${l.amount}</span> 筹码 <span style="color:var(--ivd);font-size:11px;">第${l.round}局 ${dt}</span>`;
+    el.appendChild(d);
+  });
+}
 document.getElementById('exitBtn').onclick = () => {
   wasClean = true;
   stopReconnect();
@@ -1820,6 +2174,12 @@ function onStateChange(s) {
     if (cur === 'gameScreen') return; // don't go back to lobby mid-game
     renderLobby(s);
     if (cur === 'homeScreen') show('lobbyScreen');
+  // Update ready status if modal is open
+  if (s.nextReadyPlayers && document.getElementById('winModal').style.display !== 'none') {
+    updateNextReadyStatus(s);
+  }
+  // Update loan list
+  if (s.loans) renderLoanList(s);
   } else if (s.phase === 'playing' || s.phase === 'showdown') {
     // Switch ALL clients to game screen when game starts
     if (cur === 'lobbyScreen' || cur === 'homeScreen') {
