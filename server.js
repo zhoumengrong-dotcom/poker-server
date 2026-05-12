@@ -3,17 +3,15 @@ const http = require('http');
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer((req, res) => {
-  // Health check
-  res.writeHead(200, { 
+  res.writeHead(200, {
     'Content-Type': 'text/plain',
     'Access-Control-Allow-Origin': '*'
   });
   res.end('poker-ws ok');
 });
 
-const wss = new WebSocketServer({ 
+const wss = new WebSocketServer({
   server,
-  // Keep connections alive
   clientTracking: true,
   perMessageDeflate: false
 });
@@ -21,15 +19,18 @@ const wss = new WebSocketServer({
 const rooms = new Map();
 
 function getRoom(roomId) {
-  if (!rooms.has(roomId)) rooms.set(roomId, { state: null, clients: new Map() });
+  if (!rooms.has(roomId)) {
+    rooms.set(roomId, { state: null, clients: new Map(), trueHands: {}, roundId: 0 });
+  }
   return rooms.get(roomId);
 }
 
+// stateForPlayer: returns a copy of state with other players' hole cards filtered
 function stateForPlayer(state, playerId) {
   if (!state) return null;
   const s = JSON.parse(JSON.stringify(state));
   s.players = s.players.map(p => {
-    if (p.id === playerId) return p;
+    if (p.id === playerId) return p; // self — full info
     if (p.hand) {
       p.hand = p.hand.map((c, ci) => {
         const isHole = ci === 0 || ci === 4;
@@ -52,8 +53,31 @@ function broadcastAll(room, state) {
   });
 }
 
-// Server-side heartbeat to detect dead connections
-const HEARTBEAT_INTERVAL = 20000; // 20s
+// Update trueHands from a state: for each player, store any real (non-null) cards
+function updateTrueHands(room, state) {
+  if (!state || !state.players) return;
+  if (!room.trueHands) room.trueHands = {};
+  state.players.forEach(p => {
+    if (!p.id || !p.hand) return;
+    if (!room.trueHands[p.id]) room.trueHands[p.id] = [null, null, null, null, null];
+    p.hand.forEach((c, ci) => {
+      if (c) room.trueHands[p.id][ci] = c; // record any non-null card we see
+    });
+  });
+}
+
+// Reconstruct full state by patching in trueHands for any null slots
+function reconstructState(room, state) {
+  if (!state || !state.players || !room.trueHands) return state;
+  state.players.forEach(p => {
+    const trueHand = room.trueHands[p.id];
+    if (!trueHand || !p.hand) return;
+    p.hand = p.hand.map((c, ci) => c !== null && c !== undefined ? c : trueHand[ci]);
+  });
+  return state;
+}
+
+const HEARTBEAT_INTERVAL = 20000;
 setInterval(() => {
   wss.clients.forEach(ws => {
     if (ws.isAlive === false) {
@@ -72,7 +96,7 @@ wss.on('connection', (ws) => {
   let currentRoom = null;
 
   ws.on('message', (raw) => {
-    ws.isAlive = true; // mark alive on any message
+    ws.isAlive = true;
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
     const { type, roomId, playerId, state, emote } = msg;
@@ -81,12 +105,15 @@ wss.on('connection', (ws) => {
       currentRoom = roomId;
       const room = getRoom(roomId);
       room.clients.set(ws, playerId);
-      if (!room.state && state) room.state = state;
+      if (!room.state && state) {
+        room.state = state;
+        updateTrueHands(room, state);
+      }
       if (room.state) {
         try {
-          ws.send(JSON.stringify({ 
-            type: 'state', 
-            state: stateForPlayer(room.state, playerId) 
+          ws.send(JSON.stringify({
+            type: 'state',
+            state: stateForPlayer(room.state, playerId)
           }));
         } catch(e) {}
       }
@@ -96,32 +123,26 @@ wss.on('connection', (ws) => {
     else if (type === 'state_update') {
       if (!currentRoom) return;
       const room = rooms.get(currentRoom); if (!room) return;
-      if (!room.state || state.ts >= (room.state.ts || 0)) {
-        // Merge hands: preserve real cards from old state where client may have sent null
-        // BUT ONLY within the same round + street (don't carry over to new round/street)
-        const sameRound = room.state && room.state.round === state.round
-                        && room.state.phase !== 'showdown'  // showdown→playing means new round
-                        && state.phase === 'playing';
-        if (sameRound && room.state.players) {
-          state.players = state.players.map(newP => {
-            const oldP = room.state.players.find(op => op.id === newP.id);
-            if (!oldP || !oldP.hand || !newP.hand) return newP;
-            // Only restore null slots that were ALSO non-null in old state
-            newP.hand = newP.hand.map((c, ci) => {
-              if (c === null && oldP.hand[ci]) {
-                // But only if old state's street had this slot dealt
-                // (slots [0,1] dealt at street 1, [2] at street 2, [3] at street 3, [4] at street 4)
-                const slotStreet = (ci === 0 || ci === 1) ? 1 : (ci === 2 ? 2 : (ci === 3 ? 3 : 4));
-                if (slotStreet <= (room.state.street || 1)) return oldP.hand[ci];
-              }
-              return c;
-            });
-            return newP;
-          });
-        }
-        room.state = state;
-        broadcastAll(room, state);
+
+      // Detect new round: round number incremented, or new game starts (phase change)
+      const isNewRound = !room.state
+        || (state.round && room.state.round && state.round > room.state.round)
+        || (state.phase === 'playing' && room.state.phase === 'showdown')
+        || (state.phase === 'lobby');
+
+      if (isNewRound) {
+        // New round: reset trueHands, accept the incoming state as fresh truth
+        room.trueHands = {};
       }
+
+      // Update trueHands: record any new real cards seen in this state
+      updateTrueHands(room, state);
+
+      // Reconstruct: fill in any nulls in the state with our trueHands record
+      const fullState = reconstructState(room, state);
+
+      room.state = fullState;
+      broadcastAll(room, fullState);
     }
 
     else if (type === 'emote') {
