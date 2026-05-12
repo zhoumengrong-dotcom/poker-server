@@ -1357,7 +1357,7 @@ function renderGame(s) {
 
     // Hand rendering
     const myHandEl = document.getElementById('myHand');
-    if (!renderLock) {
+    {
       myHandEl.innerHTML = '';
       const cards = myP.hand || [];
       if (!cards.some(c => c)) {
@@ -1366,16 +1366,24 @@ function renderGame(s) {
         cards.forEach((c, ci) => {
           if (!c) return;
           const isHole = ci === 0 || ci === 4;
+          const isWinner = s.winner && s.winner.playerId === myId;
+          const winCls = (s.phase === 'showdown' && !myP.folded && isWinner) ? 'win' : '';
+          // Show all my cards face-up to me, but mark hole cards with "暗" badge
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'position:relative;display:inline-block;';
+          wrap.innerHTML = mkCard(c, false, true, winCls);
           if (isHole && s.phase !== 'showdown') {
-            // Peek card
-            myHandEl.appendChild(makePeekCard(c, ci));
-          } else {
-            const isWinner = s.winner && s.winner.playerId === myId;
-            const cls = (s.phase === 'showdown' && !myP.folded && isWinner) ? 'win' : '';
-            const div = document.createElement('div');
-            div.innerHTML = mkCard(c, false, true, cls);
-            myHandEl.appendChild(div.firstChild);
+            // Add a "暗" badge to indicate this is a hole card (others can't see)
+            const badge = document.createElement('div');
+            badge.textContent = '暗';
+            badge.style.cssText = 'position:absolute;top:-6px;right:-6px;z-index:5;'
+              + 'background:linear-gradient(135deg,#1a3a2a,#0d2418);color:#e8c44a;'
+              + 'font-size:10px;font-weight:700;padding:2px 5px;border-radius:9px;'
+              + 'border:1px solid rgba(232,196,74,.6);letter-spacing:1px;'
+              + 'box-shadow:0 2px 4px rgba(0,0,0,.5);';
+            wrap.appendChild(badge);
           }
+          myHandEl.appendChild(wrap);
         });
       }
     }
@@ -1436,10 +1444,20 @@ function setupActionBar(s, myP) {
   const cap = s.cap || 0;
   const capPer = s.capPer || 0;
   const capHit = (cap > 0 && s.pot >= cap) || (capPer > 0 && myP.bet >= capPer);
+  const callBtn = document.getElementById('abCall');
 
-  // Call/Check button
-  document.getElementById('abCall').textContent = toCall > 0 ? '跟注 ' + toCall : '过牌';
-  document.getElementById('abCall').disabled = toCall > myP.chips;
+  // Call/Check button — clearly distinguish
+  if (toCall === 0) {
+    // No bet to match — can check (pass turn)
+    callBtn.textContent = '过牌';
+    callBtn.className = 'ab ab-call';
+    callBtn.disabled = false;
+  } else {
+    // Someone has bet — must call or fold (no checking allowed)
+    callBtn.textContent = '跟注 ' + toCall;
+    callBtn.className = 'ab ab-call';
+    callBtn.disabled = false; // call always allowed (auto all-in if not enough)
+  }
 
   // Raise button
   document.getElementById('abRaise').disabled = capHit || myP.chips <= toCall;
@@ -1447,8 +1465,13 @@ function setupActionBar(s, myP) {
   // All-in
   document.getElementById('abAllin').disabled = myP.chips <= 0;
 
-  // Action info
-  document.getElementById('actionInfo').textContent = '当前下注 ' + s.currentBet + ' · 你已下 ' + myP.bet;
+  // Action info — show clearly whether checking is possible
+  const infoEl = document.getElementById('actionInfo');
+  if (toCall === 0) {
+    infoEl.textContent = '没人下注 · 你可以过牌或加注';
+  } else {
+    infoEl.textContent = '需要跟注 ' + toCall + ' · 你已下注 ' + myP.bet;
+  }
 
   // Raise slider
   const slider = document.getElementById('raiseSlider');
@@ -1819,11 +1842,9 @@ function startNewRound(s) {
 //  DEAL ANIMATION (dealer flies cards)
 // ════════════════════════════════════════════════════════════════
 function animateDeal(s, street) {
-  renderLock = true;
+  // Just play visual fly-card animation, don't block rendering
+  // The cards are already in state, render shows them; animation is extra
   const slots = STREET_DEAL[street];
-
-  // For each slot, fly cards to ALL players simultaneously (with tiny stagger)
-  let totalDur = 0;
   slots.forEach((cardIdx, slotIdx) => {
     const isHole = cardIdx === 0 || cardIdx === 4;
     s.players.forEach((p, pi) => {
@@ -1832,18 +1853,14 @@ function animateDeal(s, street) {
       const targetEl = isMine
         ? document.getElementById('myHand')
         : document.getElementById('opp_' + p.id);
-      const startDelay = slotIdx * 700 + pi * 120; // stagger between players
+      const startDelay = slotIdx * 500 + pi * 100;
       setTimeout(() => {
         flyCard(p.hand[cardIdx], targetEl, isMine && !isHole, isHole, null);
       }, startDelay);
-      totalDur = Math.max(totalDur, startDelay + 650);
     });
   });
-
-  setTimeout(() => {
-    renderLock = false;
-    renderGame(s);
-  }, totalDur + 100);
+  // Render immediately — animation overlays on top
+  renderGame(s);
 }
 
 function flyCard(cardData, targetEl, showFace, isHole, onDone) {
