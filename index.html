@@ -1161,7 +1161,10 @@ function wsSend(msg) {
 
 function wsPushState(s) {
   if (!s) return;
-  if (s.ts <= lastPushedTs) return;
+  // Use monotonic increment to ensure each push has a unique timestamp
+  if (s.ts <= lastPushedTs) {
+    s.ts = lastPushedTs + 1;
+  }
   lastPushedTs = s.ts;
   wsSend({ type: 'state_update', roomId: roomId, state: s });
 }
@@ -1176,7 +1179,9 @@ function stopReconnect() {
 // ════════════════════════════════════════════════════════════════
 function onStateChange(s) {
   if (!s) return;
-  if (gs && s.ts < gs.ts) return;
+  // Accept all server states — server is authoritative
+  // Old check `s.ts < gs.ts` was wrong: local advanceTurn may set future ts,
+  // then reject the server's older but correct state
   const wasInLobby = gs && gs.phase === 'lobby';
   const wasShowdown = gs && gs.phase === 'showdown';
 
