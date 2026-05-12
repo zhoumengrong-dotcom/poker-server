@@ -97,15 +97,23 @@ wss.on('connection', (ws) => {
       if (!currentRoom) return;
       const room = rooms.get(currentRoom); if (!room) return;
       if (!room.state || state.ts >= (room.state.ts || 0)) {
-        // CRITICAL: client may have sent filtered state (other players' hole cards = null)
-        // Merge: preserve real cards from old state where new state has null
-        if (room.state && room.state.players) {
-          state.players = state.players.map((newP, i) => {
+        // Merge hands: preserve real cards from old state where client may have sent null
+        // BUT ONLY within the same round + street (don't carry over to new round/street)
+        const sameRound = room.state && room.state.round === state.round
+                        && room.state.phase !== 'showdown'  // showdown→playing means new round
+                        && state.phase === 'playing';
+        if (sameRound && room.state.players) {
+          state.players = state.players.map(newP => {
             const oldP = room.state.players.find(op => op.id === newP.id);
             if (!oldP || !oldP.hand || !newP.hand) return newP;
-            // For each card slot, if new is null but old has a real card AT THIS POSITION, restore
+            // Only restore null slots that were ALSO non-null in old state
             newP.hand = newP.hand.map((c, ci) => {
-              if (c === null && oldP.hand[ci]) return oldP.hand[ci];
+              if (c === null && oldP.hand[ci]) {
+                // But only if old state's street had this slot dealt
+                // (slots [0,1] dealt at street 1, [2] at street 2, [3] at street 3, [4] at street 4)
+                const slotStreet = (ci === 0 || ci === 1) ? 1 : (ci === 2 ? 2 : (ci === 3 ? 3 : 4));
+                if (slotStreet <= (room.state.street || 1)) return oldP.hand[ci];
+              }
               return c;
             });
             return newP;
