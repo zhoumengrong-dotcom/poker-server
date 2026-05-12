@@ -1459,18 +1459,20 @@ function setupActionBar(s, myP) {
     callBtn.disabled = false; // call always allowed (auto all-in if not enough)
   }
 
-  // Raise button
-  document.getElementById('abRaise').disabled = capHit || myP.chips <= toCall;
+  // Raise button — disable if I already raised this street (one raise per player per street)
+  const alreadyRaised = !!myP.raisedThisStreet;
+  document.getElementById('abRaise').disabled = capHit || alreadyRaised || myP.chips <= toCall;
 
   // All-in
   document.getElementById('abAllin').disabled = myP.chips <= 0;
 
   // Action info — show clearly whether checking is possible
   const infoEl = document.getElementById('actionInfo');
+  const raisedNote = myP.raisedThisStreet ? '（本轮已加注，不能再加注）' : '';
   if (toCall === 0) {
-    infoEl.textContent = '没人下注 · 你可以过牌或加注';
+    infoEl.textContent = '没人下注 · 你可以过牌或加注 ' + raisedNote;
   } else {
-    infoEl.textContent = '需要跟注 ' + toCall + ' · 你已下注 ' + myP.bet;
+    infoEl.textContent = '需要跟注 ' + toCall + ' · 你已下注 ' + myP.bet + ' ' + raisedNote;
   }
 
   // Raise slider
@@ -1601,7 +1603,9 @@ function doAction(type, amount) {
     s.pot += actual;
     s.currentBet = P.bet;
     s.roundActions = 0;
-    s.actedThisStreet = [P.id]; // raise re-opens betting, others must act again
+    // Reset raise lock for all OTHER players (re-raise reopens their option)
+    s.players.forEach(pp => { pp.raisedThisStreet = (pp.id === P.id); });
+    s.actedThisStreet = [P.id];
     s.log.push(P.name + ' 加注至 ' + P.bet);
   } else if (type === 'allin') {
     const all = P.chips;
@@ -1612,7 +1616,9 @@ function doAction(type, amount) {
     if (P.bet > s.currentBet) {
       s.currentBet = P.bet;
       s.roundActions = 0;
-      s.actedThisStreet = [P.id]; // all-in raise re-opens betting
+      s.actedThisStreet = [P.id];
+      // Reset raise lock for all OTHER players (all-in re-raise reopens their option)
+      s.players.forEach(pp => { pp.raisedThisStreet = (pp.id === P.id); });
     }
     s.log.push(P.name + ' All-In 押上 ' + all);
   }
@@ -1667,7 +1673,7 @@ function advanceTurn(s) {
     s.currentBet = 0;
     s.roundActions = 0;
     s.actedThisStreet = []; // reset who acted
-    s.players.forEach(p => { p.bet = 0; });
+    s.players.forEach(p => { p.bet = 0; p.raisedThisStreet = false; });
     dealStreetCards(s, s.street);
     s.currentTurn = findFirstBetter(s);
     const names = ['', '第1轮', '第2轮', '第3轮', '第4轮（最后一张暗牌）'];
@@ -1813,6 +1819,7 @@ function startNewRound(s) {
   s.actedThisStreet = [];
   s.players.forEach(p => {
     p.hand = [null, null, null, null, null];
+    p.raisedThisStreet = false;
     p.bet = 0;
     p.roundBet = 0;
     p.folded = false;
