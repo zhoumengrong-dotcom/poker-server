@@ -100,18 +100,20 @@ button,input,select{font-family:inherit;-webkit-appearance:none;appearance:none;
 
 /* ============ OPP ZONE ============ */
 .opp-zone{padding:55px 10px 8px;flex-shrink:0;overflow:visible;position:relative;}
-.opp-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+.opp-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;
+  justify-content:center;align-items:start;}
 .opp-slot{background:rgba(0,0,0,.5);border:1px solid rgba(232,196,74,.15);
-  border-radius:10px;padding:7px 8px;min-width:100px;max-width:170px;flex:1;
+  border-radius:10px;padding:6px 8px;min-width:120px;
   transition:all .2s;overflow:visible;}
 .opp-slot.turn{border-color:var(--gold);box-shadow:0 0 8px rgba(232,196,74,.4);}
 .opp-slot.fold{opacity:.4;}
-.opp-n{font-size:12px;color:var(--gold);margin-bottom:3px;font-weight:700;}
-.opp-c{font-size:11px;color:var(--ivd);margin-bottom:5px;}
-.opp-cards{display:flex;gap:3px;align-items:center;min-height:50px;}
-.opp-bet{font-size:11px;color:var(--green-ok);margin-top:3px;}
-.opp-status{font-size:11px;color:#e74c3c;font-weight:700;margin-top:2px;}
-.opp-rank{font-size:11px;color:var(--ivd);font-style:italic;margin-top:3px;}
+.opp-n{font-size:11px;color:var(--gold);margin-bottom:2px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.opp-c{font-size:10px;color:var(--ivd);margin-bottom:3px;}
+.opp-cards{display:flex;gap:2px;align-items:center;min-height:38px;}
+.opp-bet{font-size:10px;color:var(--green-ok);margin-top:2px;}
+.opp-status{font-size:10px;color:#e74c3c;font-weight:700;margin-top:2px;}
+.opp-rank{font-size:10px;color:var(--ivd);font-style:italic;margin-top:2px;}
 .opp-rank.winner{color:var(--green-ok);font-weight:700;font-style:normal;}
 
 /* ============ DEALER ============ */
@@ -158,92 +160,110 @@ button,input,select{font-family:inherit;-webkit-appearance:none;appearance:none;
 .my-bet-show{font-size:11px;color:var(--green-ok);text-align:center;margin-top:2px;}
 
 /* ============ CARDS — BIG ============ */
+/* === REAL POKER CARD DESIGN === */
 .card{
-  width:46px;height:66px;
-  background:#fefdf8;
-  background-image:-webkit-linear-gradient(135deg,#ffffff,#faf7eb);
-  background-image:linear-gradient(135deg,#ffffff,#faf7eb);
+  width:48px;height:68px;
+  background:#fffef9;
+  background-image:-webkit-linear-gradient(135deg,#ffffff 0%,#fdfaf0 100%);
+  background-image:linear-gradient(135deg,#ffffff 0%,#fdfaf0 100%);
   border-radius:5px;
-  border:1px solid #c7bea0;
-  box-shadow:1px 2px 4px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,1);
+  border:1px solid #b8aa80;
+  box-shadow:1px 2px 4px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.9);
   position:relative;flex-shrink:0;
-  font-family:'Helvetica Neue','PingFang SC',Arial,sans-serif;
+  font-family:'Helvetica Neue',Arial,sans-serif;
   display:inline-block;
-  font-weight:700;
+  overflow:hidden;
 }
-.card-lg{width:62px;height:88px;border-radius:6px;}
-.card.rc{color:#c0392b;}
-.card.bk{color:#1a1a2e;}
+.card-lg{width:64px;height:90px;border-radius:6px;}
+.card.rc{color:#d0021b;}
+.card.bk{color:#1a1a1a;}
 
-/* Back of card — classic blue poker pattern */
+/* Card back — classic diamond pattern */
 .card.back{
-  background:#1e3c8a;
+  background:#1d3a8a;
   background-image:
-    -webkit-linear-gradient(45deg,#1e3c8a 25%,transparent 25%),
-    -webkit-linear-gradient(-45deg,#1e3c8a 25%,transparent 25%),
-    -webkit-linear-gradient(45deg,transparent 75%,#1e3c8a 75%),
-    -webkit-linear-gradient(-45deg,transparent 75%,#1e3c8a 75%);
-  background-image:
-    linear-gradient(45deg,#1e3c8a 25%,transparent 25%),
-    linear-gradient(-45deg,#1e3c8a 25%,transparent 25%),
-    linear-gradient(45deg,transparent 75%,#1e3c8a 75%),
-    linear-gradient(-45deg,transparent 75%,#1e3c8a 75%);
-  background-size:6px 6px;
-  background-position:0 0,0 3px,3px -3px,-3px 0;
-  background-color:#2a4fa0;
-  border:1px solid #2a4fa0;
+    repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0,rgba(255,255,255,.07) 1px,transparent 1px,transparent 5px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.07) 0,rgba(255,255,255,.07) 1px,transparent 1px,transparent 5px);
+  border:1px solid #1a2f6b;
 }
 .card.back::before{
   content:'';position:absolute;top:3px;left:3px;right:3px;bottom:3px;
-  border:1.5px solid rgba(255,255,255,.3);border-radius:3px;
-  background:rgba(30,60,138,.3);
+  border:1.5px solid rgba(255,255,255,.35);border-radius:3px;
 }
 .card.back::after{
-  content:'♣';position:absolute;top:50%;left:50%;
-  -webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);
-  font-size:24px;color:rgba(255,255,255,.4);
+  content:'';position:absolute;top:50%;left:50%;
+  -webkit-transform:translate(-50%,-50%) rotate(45deg);transform:translate(-50%,-50%) rotate(45deg);
+  width:14px;height:14px;
+  background:rgba(232,196,74,.5);
+  border:1px solid rgba(232,196,74,.7);
 }
-.card-lg.back::after{font-size:32px;}
+.card-lg.back::after{width:20px;height:20px;}
 
-/* Corner indices — like real poker */
-.card .ctl{position:absolute;top:2px;left:3px;line-height:1;text-align:center;}
-.card .cbr{position:absolute;bottom:2px;right:3px;line-height:1;text-align:center;
+/* Corner indices — top-left + bottom-right (rotated 180) */
+.card .ctl{position:absolute;top:3px;left:4px;line-height:1;text-align:center;font-weight:700;}
+.card .cbr{position:absolute;bottom:3px;right:4px;line-height:1;text-align:center;font-weight:700;
   -webkit-transform:rotate(180deg);transform:rotate(180deg);}
-.card .ctl .rk,.card .cbr .rk{display:block;font-size:14px;font-weight:900;letter-spacing:-1.2px;font-family:'Arial Black','Helvetica Neue',sans-serif;}
-.card .ctl .st,.card .cbr .st{display:block;font-size:11px;line-height:1;margin-top:-1px;}
+.card .ctl .rk,.card .cbr .rk{display:block;font-size:13px;font-family:Georgia,'Times New Roman',serif;letter-spacing:-1px;}
+.card .ctl .st,.card .cbr .st{display:block;font-size:10px;line-height:1;margin-top:0;}
 .card-lg .ctl{top:4px;left:5px;}
 .card-lg .cbr{bottom:4px;right:5px;}
-.card-lg .ctl .rk,.card-lg .cbr .rk{font-size:17px;}
-.card-lg .ctl .st,.card-lg .cbr .st{font-size:13px;}
+.card-lg .ctl .rk,.card-lg .cbr .rk{font-size:16px;}
+.card-lg .ctl .st,.card-lg .cbr .st{font-size:12px;}
 
-/* Center decoration: big suit symbol, only visible on non-face cards */
-.card .ctr{
-  font-size:28px;line-height:1;opacity:.85;
-  position:absolute;top:50%;left:50%;
-  -webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);
+/* === Center pip arrangements === */
+/* For number cards: pip layout grid */
+.card .pips{
+  position:absolute;
+  top:15%;left:28%;right:28%;bottom:15%;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:repeat(7,1fr);
+  align-items:center;
+  justify-items:center;
+  font-size:11px;
+  line-height:1;
+  pointer-events:none;
 }
-.card-lg .ctr{font-size:36px;}
+.card-lg .pips{font-size:14px;}
+.card .pips span{display:block;}
+.card .pips .flip{-webkit-transform:rotate(180deg);transform:rotate(180deg);}
 
-/* Face card decoration — boxed letter */
-.card .cface{
+/* Single-column pips (for 2, 3 — center column) */
+.card .pips.col1{
+  grid-template-columns:1fr;
+}
+
+/* Face cards (J/Q/K) — large letter + small suit */
+.card .face{
   position:absolute;top:50%;left:50%;
   -webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);
   display:flex;flex-direction:column;align-items:center;line-height:1;
 }
-.card .cface .fr{font-size:22px;font-weight:900;font-family:'Times New Roman',serif;letter-spacing:-1px;}
-.card .cface .fs{font-size:14px;margin-top:0;}
-.card-lg .cface .fr{font-size:28px;}
-.card-lg .cface .fs{font-size:18px;}
+.card .face .fl{font-size:24px;font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:-1px;}
+.card .face .fs{font-size:15px;margin-top:1px;}
+.card-lg .face .fl{font-size:32px;}
+.card-lg .face .fs{font-size:20px;}
+
+/* Ace center: single large suit */
+.card .ace{
+  position:absolute;top:50%;left:50%;
+  -webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);
+  font-size:32px;line-height:1;
+}
+.card-lg .ace{font-size:42px;}
 
 /* opp slot cards smaller */
-.opp-cards .card{width:32px;height:46px;border-radius:4px;}
-.opp-cards .card .ctl{top:2px;left:3px;}
-.opp-cards .card .cbr{bottom:2px;right:3px;}
-.opp-cards .card .ctl .rk,.opp-cards .card .cbr .rk{font-size:10px;}
-.opp-cards .card .ctl .st,.opp-cards .card .cbr .st{font-size:8px;}
-.opp-cards .card .ctr{font-size:15px;}
-.opp-cards .card .cface .fr{font-size:12px;}
-.opp-cards .card .cface .fs{font-size:9px;}
+.opp-cards{flex-wrap:wrap;}
+.opp-cards .card{width:24px;height:34px;border-radius:3px;}
+.opp-cards .card .ctl{top:1px;left:2px;}
+.opp-cards .card .cbr{bottom:1px;right:2px;}
+.opp-cards .card .ctl .rk,.opp-cards .card .cbr .rk{font-size:8px;letter-spacing:-0.5px;}
+.opp-cards .card .ctl .st,.opp-cards .card .cbr .st{font-size:6px;}
+.opp-cards .card .pips{font-size:6px;top:18%;left:25%;right:25%;bottom:18%;}
+.opp-cards .card .face .fl{font-size:13px;}
+.opp-cards .card .face .fs{font-size:8px;}
+.opp-cards .card .ace{font-size:17px;}
+.opp-cards .card.back::after{width:7px;height:7px;}
 
 /* card winning glow */
 .card.win{-webkit-animation:winGlow 1s ease infinite alternate;
@@ -400,17 +420,25 @@ button,input,select{font-family:inherit;-webkit-appearance:none;appearance:none;
 
 /* ============ RESPONSIVE ============ */
 @media (max-width:380px){
-  .card{width:38px;height:56px;}
-  .card-lg{width:50px;height:72px;}
-  .opp-cards .card{width:28px;height:40px;}
+  .card{width:42px;height:60px;}
+  .card-lg{width:54px;height:76px;}
+  .card .pips{font-size:9px;}
+  .card .face .fl{font-size:20px;}
+  .card .ace{font-size:26px;}
+  .opp-cards .card{width:22px;height:30px;}
+  .opp-cards .card .pips{font-size:5px;}
   .pot-num{font-size:26px;}
   .lobby-h{font-size:16px;}
 }
 @media (min-width:600px){
-  .card{width:48px;height:70px;}
-  .card-lg{width:64px;height:90px;}
-  .opp-cards .card{width:38px;height:54px;}
-  .opp-slot{max-width:200px;}
+  .card{width:56px;height:80px;}
+  .card-lg{width:72px;height:102px;}
+  .card-lg .pips{font-size:18px;}
+  .opp-cards .card{width:30px;height:42px;}
+  .opp-cards .card .pips{font-size:7px;}
+  .opp-cards .card .face .fl{font-size:15px;}
+  .opp-cards .card .ace{font-size:20px;}
+  .opp-row{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
   .pot-num{font-size:42px;}
   .dealer-svg{width:80px;height:80px;}
   .dealer-container{top:-12px;}
@@ -978,6 +1006,21 @@ function calcSidePots(players) {
 // ════════════════════════════════════════════════════════════════
 //  CARD RENDERING
 // ════════════════════════════════════════════════════════════════
+// Pip layout: row-column positions for each pip on a number card (7-row grid)
+// Each entry: [row, col] (1-indexed row 1-7, col 1=left, 2=right)
+// For odd-count cards a center pip uses col-span
+const PIP_LAYOUTS = {
+  '2': [{r:1,c:1.5,flip:0},{r:7,c:1.5,flip:1}],
+  '3': [{r:1,c:1.5,flip:0},{r:4,c:1.5,flip:0},{r:7,c:1.5,flip:1}],
+  '4': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
+  '5': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:4,c:1.5,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
+  '6': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:4,c:1,flip:0},{r:4,c:2,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
+  '7': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:2.5,c:1.5,flip:0},{r:4,c:1,flip:0},{r:4,c:2,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
+  '8': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:2.5,c:1.5,flip:0},{r:4,c:1,flip:0},{r:4,c:2,flip:0},{r:5.5,c:1.5,flip:1},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
+  '9': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:3,c:1,flip:0},{r:3,c:2,flip:0},{r:4,c:1.5,flip:0},{r:5,c:1,flip:1},{r:5,c:2,flip:1},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
+  '10':[{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:2.3,c:1.5,flip:0},{r:3,c:1,flip:0},{r:3,c:2,flip:0},{r:5,c:1,flip:1},{r:5,c:2,flip:1},{r:5.7,c:1.5,flip:1},{r:7,c:1,flip:1},{r:7,c:2,flip:1}]
+};
+
 function mkCard(c, hidden, lg, extra) {
   const sz = lg ? 'card card-lg' : 'card';
   const ec = extra ? ' ' + extra : '';
@@ -985,10 +1028,26 @@ function mkCard(c, hidden, lg, extra) {
     return '<div class="' + sz + ' back' + ec + '"></div>';
   }
   const col = RED_SUITS.indexOf(c.s) >= 0 ? 'rc' : 'bk';
-  const isFace = ['J', 'Q', 'K', 'A'].indexOf(c.r) >= 0;
-  const center = isFace
-    ? '<div class="cface"><span class="fr">' + c.r + '</span><span class="fs">' + c.s + '</span></div>'
-    : '<span class="ctr">' + c.s + '</span>';
+
+  let center;
+  if (c.r === 'A') {
+    // Ace — single large suit symbol
+    center = '<div class="ace">' + c.s + '</div>';
+  } else if (['J','Q','K'].indexOf(c.r) >= 0) {
+    // Face card — large letter + suit
+    center = '<div class="face"><span class="fl">' + c.r + '</span><span class="fs">' + c.s + '</span></div>';
+  } else {
+    // Number card — pip layout
+    const layout = PIP_LAYOUTS[c.r] || [];
+    const pips = layout.map(p => {
+      const colStart = p.c === 1.5 ? 1 : Math.floor(p.c);
+      const colSpan = p.c === 1.5 ? 2 : 1;
+      const cls = p.flip ? 'flip' : '';
+      return '<span class="' + cls + '" style="grid-row:' + Math.round(p.r) + ';grid-column:' + colStart + '/span ' + colSpan + ';">' + c.s + '</span>';
+    }).join('');
+    center = '<div class="pips">' + pips + '</div>';
+  }
+
   return '<div class="' + sz + ' ' + col + ec + '">'
     + '<div class="ctl"><span class="rk">' + c.r + '</span><span class="st">' + c.s + '</span></div>'
     + center
@@ -1219,12 +1278,18 @@ function onStateChange(s) {
   } else if (s.phase === 'showdown') {
     if (curId !== 'gameScreen') show('gameScreen');
     renderGame(s);
-    if (s.winner && !wasShowdown) {
-      // Only show modal once when transitioning to showdown
-      setTimeout(() => showWinModal(s), 800);
-    } else if (s.winner) {
-      // Update existing modal
-      updateNextReadyStatus(s);
+    if (s.winner) {
+      const modalShown = document.getElementById('winModal').style.display === 'flex';
+      if (!wasShowdown) {
+        // First time entering showdown — show win modal
+        setTimeout(() => showWinModal(s), 800);
+      } else if (!modalShown) {
+        // Already in showdown but modal got hidden — show it again with current data
+        showWinModal(s);
+      } else {
+        // Modal is showing, just update ready status
+        updateNextReadyStatus(s);
+      }
     }
   }
 }
@@ -1955,24 +2020,39 @@ function showWinModal(s) {
     winCardsHtml = w.cards.map(c => c ? mkCard(c, false, true, 'win') : mkCard(null, true, true, '')).join('');
   }
   document.getElementById('wCards').innerHTML = winCardsHtml;
+  // Reset ready button defaults; updateNextReadyStatus will configure properly
   document.getElementById('readyNextBtn').disabled = false;
   document.getElementById('readyNextBtn').textContent = '✓ 准备下一局';
-  document.getElementById('nextRoundBtn').style.display = 'none';
   updateNextReadyStatus(s);
   document.getElementById('winModal').style.display = 'flex';
 }
 
 function updateNextReadyStatus(s) {
-  const total = s.players ? s.players.length : 0;
-  const ready = (s.nextReadyPlayers || []).length;
-  document.getElementById('readyStatus').textContent = ready + ' / ' + total + ' 人准备好了';
-  const allReady = ready >= total;
+  if (!s || !s.players) return;
+  // Count non-host players ready (host doesn't need to ready themselves)
+  const nonHostPlayers = s.players.filter(p => !p.isHost);
+  const nonHostReady = nonHostPlayers.filter(p => (s.nextReadyPlayers || []).indexOf(p.id) >= 0).length;
+  const totalNonHost = nonHostPlayers.length;
+  document.getElementById('readyStatus').textContent = nonHostReady + ' / ' + totalNonHost + ' 人已准备';
+
+  // Host can start when all non-host players are ready
+  const allReady = nonHostReady >= totalNonHost;
   if (isHost) {
-    document.getElementById('nextRoundBtn').style.display = allReady ? 'block' : 'none';
-  }
-  if ((s.nextReadyPlayers || []).indexOf(myId) >= 0) {
-    document.getElementById('readyNextBtn').disabled = true;
-    document.getElementById('readyNextBtn').textContent = '✓ 已准备';
+    document.getElementById('nextRoundBtn').style.display = 'block';
+    document.getElementById('nextRoundBtn').disabled = !allReady;
+    document.getElementById('nextRoundBtn').textContent = allReady ? '▶ 开始下一局' : '等待其他玩家准备...';
+    // Host doesn't need ready button
+    document.getElementById('readyNextBtn').style.display = 'none';
+  } else {
+    document.getElementById('nextRoundBtn').style.display = 'none';
+    document.getElementById('readyNextBtn').style.display = 'block';
+    if ((s.nextReadyPlayers || []).indexOf(myId) >= 0) {
+      document.getElementById('readyNextBtn').disabled = true;
+      document.getElementById('readyNextBtn').textContent = '✓ 已准备 (等待房主开始)';
+    } else {
+      document.getElementById('readyNextBtn').disabled = false;
+      document.getElementById('readyNextBtn').textContent = '✓ 准备下一局';
+    }
   }
 }
 
@@ -1998,13 +2078,22 @@ document.getElementById('nextRoundBtn').onclick = () => {
   s.round = (s.round || 1) + 1;
   s.phase = 'playing';
   s.winner = null;
-  const active = s.players.filter(p => p.chips > 0);
-  if (active.length < 2) {
-    toast('筹码不足，游戏结束');
-    show('homeScreen');
+  // Find players with enough chips to play (at least ante)
+  const ante = s.ante || 20;
+  const playable = s.players.filter(p => p.chips >= ante);
+  // Players with 0 chips are eliminated; players with chips < ante also can't play
+  const broke = s.players.filter(p => p.chips < ante);
+  if (playable.length < 2) {
+    if (broke.length > 0) {
+      toast('以下玩家筹码不足' + ante + '：' + broke.map(p=>p.name).join('、') + '，需要补充或借筹码');
+    } else {
+      toast('至少2人才能继续');
+    }
+    // Re-open win modal so they can add chips
+    setTimeout(() => showWinModal(gs), 200);
     return;
   }
-  s.players = active;
+  s.players = playable;
   dealerIdx = (dealerIdx + 1) % s.players.length;
   const rotated = [...s.players.slice(dealerIdx), ...s.players.slice(0, dealerIdx)];
   s.players = rotated;
@@ -2032,17 +2121,21 @@ function addChips(amount) {
   gs = s;
   wsPushState(s);
   toast('+' + amount + ' 筹码已到账');
+  // If win modal was showing, keep showing it with updated state
+  if (gs.phase === 'showdown' && gs.winner) {
+    setTimeout(() => showWinModal(gs), 200);
+  }
 }
 window.addChips = addChips;
 
 document.getElementById('addChipsBtn').onclick = () => {
-  document.getElementById('winModal').style.display = 'none';
+  // Don't close winModal — chip modal overlays on top
   document.getElementById('chipModal').style.display = 'flex';
 };
 
 document.getElementById('loanBtn').onclick = () => {
   if (!gs) return;
-  document.getElementById('winModal').style.display = 'none';
+  // Don't close winModal — loan modal overlays on top
   const sel = document.getElementById('loanTarget');
   sel.innerHTML = '';
   gs.players.filter(p => p.id !== myId).forEach(p => {
@@ -2075,6 +2168,10 @@ function confirmLoan(amount) {
   gs = s;
   wsPushState(s);
   toast('已借给 ' + toP.name + ' ' + amount + ' 筹码');
+  // Keep win modal showing
+  if (gs.phase === 'showdown' && gs.winner) {
+    setTimeout(() => showWinModal(gs), 200);
+  }
 }
 window.confirmLoan = confirmLoan;
 
