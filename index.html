@@ -1420,7 +1420,20 @@ function renderGame(s) {
       wm.style.display = 'none';
       setupActionBar(s, myP);
       if (!countdownTimer && s.turnTimeout > 0) {
-        startCountdown(s.turnTimeout, () => doAction('fold'));
+        startCountdown(s.turnTimeout, () => {
+          // Timeout action: check if free, fold if there's a bet to call
+          if (!gs) return;
+          const cur = gs.players.find(p => p.id === myId);
+          if (!cur) return;
+          const toCallNow = Math.max(0, gs.currentBet - cur.bet);
+          if (toCallNow === 0) {
+            doAction('call'); // free check (call with 0 cost)
+            toast('超时 — 自动过牌');
+          } else {
+            doAction('fold');
+            toast('超时 — 自动弃牌');
+          }
+        });
       }
     } else {
       ab.style.display = 'none';
