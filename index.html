@@ -100,8 +100,11 @@ button,input,select{font-family:inherit;-webkit-appearance:none;appearance:none;
 
 /* ============ OPP ZONE ============ */
 .opp-zone{padding:55px 10px 8px;flex-shrink:0;overflow:visible;position:relative;}
-.opp-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;
-  justify-content:center;align-items:start;}
+.opp-row{display:-webkit-flex;display:flex;flex-wrap:wrap;gap:6px;
+  justify-content:center;align-items:flex-start;}
+@supports (display:grid){
+  .opp-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));}
+}
 .opp-slot{background:rgba(0,0,0,.5);border:1px solid rgba(232,196,74,.15);
   border-radius:10px;padding:6px 8px;min-width:120px;
   transition:all .2s;overflow:visible;}
@@ -210,27 +213,23 @@ button,input,select{font-family:inherit;-webkit-appearance:none;appearance:none;
 .card-lg .ctl .rk,.card-lg .cbr .rk{font-size:16px;}
 .card-lg .ctl .st,.card-lg .cbr .st{font-size:12px;}
 
-/* === Center pip arrangements === */
-/* For number cards: pip layout grid */
+/* === Center pip arrangements (absolute positioned for Safari compat) === */
 .card .pips{
   position:absolute;
-  top:15%;left:28%;right:28%;bottom:15%;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:repeat(7,1fr);
-  align-items:center;
-  justify-items:center;
-  font-size:11px;
-  line-height:1;
+  top:0;left:0;right:0;bottom:0;
   pointer-events:none;
 }
-.card-lg .pips{font-size:14px;}
-.card .pips span{display:block;}
-.card .pips .flip{-webkit-transform:rotate(180deg);transform:rotate(180deg);}
-
-/* Single-column pips (for 2, 3 — center column) */
-.card .pips.col1{
-  grid-template-columns:1fr;
+.card .pips span{
+  position:absolute;
+  font-size:11px;
+  line-height:1;
+  -webkit-transform:translate(-50%,-50%);
+  transform:translate(-50%,-50%);
+}
+.card-lg .pips span{font-size:14px;}
+.card .pips .flip{
+  -webkit-transform:translate(-50%,-50%) rotate(180deg);
+  transform:translate(-50%,-50%) rotate(180deg);
 }
 
 /* Face cards (J/Q/K) — large letter + small suit */
@@ -433,16 +432,17 @@ button,input,select{font-family:inherit;-webkit-appearance:none;appearance:none;
 @media (min-width:600px){
   .card{width:56px;height:80px;}
   .card-lg{width:72px;height:102px;}
-  .card-lg .pips{font-size:18px;}
   .opp-cards .card{width:30px;height:42px;}
-  .opp-cards .card .pips{font-size:7px;}
-  .opp-cards .card .face .fl{font-size:15px;}
-  .opp-cards .card .ace{font-size:20px;}
-  .opp-row{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+  .opp-row{display:-webkit-flex;display:flex;}
   .pot-num{font-size:42px;}
   .dealer-svg{width:80px;height:80px;}
   .dealer-container{top:-12px;}
   .opp-zone{padding-top:70px;}
+}
+@media (min-width:600px){
+  @supports (display:grid){
+    .opp-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+  }
 }
 
 /* hide scrollbars */
@@ -1006,19 +1006,18 @@ function calcSidePots(players) {
 // ════════════════════════════════════════════════════════════════
 //  CARD RENDERING
 // ════════════════════════════════════════════════════════════════
-// Pip layout: row-column positions for each pip on a number card (7-row grid)
-// Each entry: [row, col] (1-indexed row 1-7, col 1=left, 2=right)
-// For odd-count cards a center pip uses col-span
+// Pip positions: {x: left%, y: top%, flip: 0/1}
+// Top half (y < 50) not flipped, bottom half (y > 50) rotated 180
 const PIP_LAYOUTS = {
-  '2': [{r:1,c:1.5,flip:0},{r:7,c:1.5,flip:1}],
-  '3': [{r:1,c:1.5,flip:0},{r:4,c:1.5,flip:0},{r:7,c:1.5,flip:1}],
-  '4': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
-  '5': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:4,c:1.5,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
-  '6': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:4,c:1,flip:0},{r:4,c:2,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
-  '7': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:2.5,c:1.5,flip:0},{r:4,c:1,flip:0},{r:4,c:2,flip:0},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
-  '8': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:2.5,c:1.5,flip:0},{r:4,c:1,flip:0},{r:4,c:2,flip:0},{r:5.5,c:1.5,flip:1},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
-  '9': [{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:3,c:1,flip:0},{r:3,c:2,flip:0},{r:4,c:1.5,flip:0},{r:5,c:1,flip:1},{r:5,c:2,flip:1},{r:7,c:1,flip:1},{r:7,c:2,flip:1}],
-  '10':[{r:1,c:1,flip:0},{r:1,c:2,flip:0},{r:2.3,c:1.5,flip:0},{r:3,c:1,flip:0},{r:3,c:2,flip:0},{r:5,c:1,flip:1},{r:5,c:2,flip:1},{r:5.7,c:1.5,flip:1},{r:7,c:1,flip:1},{r:7,c:2,flip:1}]
+  '2': [{x:50,y:22,f:0},{x:50,y:78,f:1}],
+  '3': [{x:50,y:22,f:0},{x:50,y:50,f:0},{x:50,y:78,f:1}],
+  '4': [{x:33,y:22,f:0},{x:67,y:22,f:0},{x:33,y:78,f:1},{x:67,y:78,f:1}],
+  '5': [{x:33,y:22,f:0},{x:67,y:22,f:0},{x:50,y:50,f:0},{x:33,y:78,f:1},{x:67,y:78,f:1}],
+  '6': [{x:33,y:22,f:0},{x:67,y:22,f:0},{x:33,y:50,f:0},{x:67,y:50,f:0},{x:33,y:78,f:1},{x:67,y:78,f:1}],
+  '7': [{x:33,y:22,f:0},{x:67,y:22,f:0},{x:50,y:36,f:0},{x:33,y:50,f:0},{x:67,y:50,f:0},{x:33,y:78,f:1},{x:67,y:78,f:1}],
+  '8': [{x:33,y:22,f:0},{x:67,y:22,f:0},{x:50,y:36,f:0},{x:33,y:50,f:0},{x:67,y:50,f:0},{x:50,y:64,f:1},{x:33,y:78,f:1},{x:67,y:78,f:1}],
+  '9': [{x:33,y:22,f:0},{x:67,y:22,f:0},{x:33,y:38,f:0},{x:67,y:38,f:0},{x:50,y:50,f:0},{x:33,y:62,f:1},{x:67,y:62,f:1},{x:33,y:78,f:1},{x:67,y:78,f:1}],
+  '10':[{x:33,y:22,f:0},{x:67,y:22,f:0},{x:50,y:32,f:0},{x:33,y:42,f:0},{x:67,y:42,f:0},{x:33,y:58,f:1},{x:67,y:58,f:1},{x:50,y:68,f:1},{x:33,y:78,f:1},{x:67,y:78,f:1}]
 };
 
 function mkCard(c, hidden, lg, extra) {
@@ -1037,13 +1036,11 @@ function mkCard(c, hidden, lg, extra) {
     // Face card — large letter + suit
     center = '<div class="face"><span class="fl">' + c.r + '</span><span class="fs">' + c.s + '</span></div>';
   } else {
-    // Number card — pip layout
+    // Number card — pip layout (absolute positioned)
     const layout = PIP_LAYOUTS[c.r] || [];
     const pips = layout.map(p => {
-      const colStart = p.c === 1.5 ? 1 : Math.floor(p.c);
-      const colSpan = p.c === 1.5 ? 2 : 1;
-      const cls = p.flip ? 'flip' : '';
-      return '<span class="' + cls + '" style="grid-row:' + Math.round(p.r) + ';grid-column:' + colStart + '/span ' + colSpan + ';">' + c.s + '</span>';
+      const cls = p.f ? 'flip' : '';
+      return '<span class="' + cls + '" style="left:' + p.x + '%;top:' + p.y + '%;">' + c.s + '</span>';
     }).join('');
     center = '<div class="pips">' + pips + '</div>';
   }
@@ -1349,6 +1346,13 @@ function renderLobby(s) {
 // ════════════════════════════════════════════════════════════════
 function renderGame(s) {
   document.getElementById('topRoom').textContent = '房间 ' + roomId;
+  // Offline warning
+  if (!wsConnected) {
+    const t = document.getElementById('topPhase');
+    if (t && !t.textContent.includes('连接中')) {
+      t.textContent = '⚠ 连接中...';
+    }
+  }
   document.getElementById('topPhase').textContent = s.phase === 'playing'
     ? '下注中 · 第' + s.street + '轮' : (s.phase === 'showdown' ? '摊牌' : '大厅');
   document.getElementById('potNum').textContent = s.pot || 0;
@@ -1542,9 +1546,12 @@ function setupActionBar(s, myP) {
     callBtn.disabled = false; // call always allowed (auto all-in if not enough)
   }
 
-  // Raise button — disable if I already raised this street (one raise per player per street)
+  // Raise button — disable if I already raised, can't afford min raise, or no chips
   const alreadyRaised = !!myP.raisedThisStreet;
-  document.getElementById('abRaise').disabled = capHit || alreadyRaised || myP.chips <= toCall;
+  const minRaiseAmt = s.currentBet > 0 ? s.currentBet + s.ante : s.ante;
+  const maxAffordable = myP.bet + myP.chips;
+  const cantAffordRaise = maxAffordable < minRaiseAmt;
+  document.getElementById('abRaise').disabled = capHit || alreadyRaised || cantAffordRaise;
 
   // All-in
   document.getElementById('abAllin').disabled = myP.chips <= 0;
@@ -1598,7 +1605,6 @@ document.getElementById('abAllin').onclick = () => doAction('allin');
 // ════════════════════════════════════════════════════════════════
 function startCountdown(sec, onExpire) {
   clearCountdown();
-  let remaining = sec;
   const wrap = document.getElementById('countdownWrap');
   const num = document.getElementById('countdownNum');
   const fill = document.getElementById('countdownFill');
@@ -1607,10 +1613,14 @@ function startCountdown(sec, onExpire) {
   num.className = 'countdown-num';
   fill.className = 'countdown-fill';
   fill.style.width = '100%';
-  countdownTimer = setInterval(() => {
-    remaining--;
+  // Use wall-clock time so it works after backgrounding (iOS phone calls etc.)
+  const startMs = Date.now();
+  const totalMs = sec * 1000;
+  countdownTimer = setInterval(function() {
+    const elapsed = Date.now() - startMs;
+    const remaining = Math.max(0, Math.ceil((totalMs - elapsed) / 1000));
     num.textContent = remaining;
-    fill.style.width = (remaining / sec * 100) + '%';
+    fill.style.width = Math.max(0, (totalMs - elapsed) / totalMs * 100) + '%';
     if (remaining <= 10) {
       num.className = 'countdown-num urgent';
       fill.className = 'countdown-fill urgent';
@@ -1619,7 +1629,7 @@ function startCountdown(sec, onExpire) {
       clearCountdown();
       onExpire();
     }
-  }, 1000);
+  }, 250); // tick more often for responsive UI after return
 }
 
 function clearCountdown() {
@@ -1850,7 +1860,7 @@ function doShowdown(s) {
   s.phase = 'showdown';
 
   saveRec({ round: s.round, winner: winner.name, handName: ev.name, pot: s.pot,
-    chips: Object.fromEntries(s.players.map(p => [p.name, p.chips])) });
+    chips: s.players.reduce(function(acc,p){acc[p.name]=p.chips;return acc;},{}) });
   s.ts = Date.now();
   gs = s;
   wsPushState(s);
@@ -2311,19 +2321,28 @@ document.getElementById('doJoinBtn').onclick = () => {
       gs = null;
       return;
     }
+    // If game in progress, can only watch (spectator) — but for simplicity disallow
+    if (gs.phase !== 'lobby' && !gs.players.find(p => p.id === myId)) {
+      toast('游戏进行中，请等待本局结束');
+      roomId = ''; myId = ''; gs = null;
+      return;
+    }
     // Add self to players if not there
     if (!gs.players.find(p => p.id === myId)) {
       const s = JSON.parse(JSON.stringify(gs));
+      // Use initial chips matching host's setting
+      const initChips = (s.players[0] && s.players[0].chips) ? s.players[0].chips : 1000;
       s.players.push({
         id: myId,
         name: myName,
-        chips: s.players[0] ? s.players[0].chips : 1000,
-        hand: [],
+        chips: initChips,
+        hand: [null, null, null, null, null],
         bet: 0,
         roundBet: 0,
         folded: false,
         ready: false,
-        isHost: false
+        isHost: false,
+        raisedThisStreet: false
       });
       s.ts = Date.now();
       gs = s;
@@ -2353,20 +2372,32 @@ document.getElementById('startBtn').onclick = () => {
 };
 
 document.getElementById('leaveLobBtn').onclick = () => {
-  wasClean = true;
-  stopReconnect();
-  roomId = ''; myId = ''; isHost = false; gs = null;
-  show('homeScreen');
+  cleanLeaveRoom();
 };
 
 document.getElementById('exitBtn').onclick = () => {
   if (!confirm('确定要退出游戏吗？')) return;
+  cleanLeaveRoom();
+};
+
+function cleanLeaveRoom() {
   wasClean = true;
   stopReconnect();
+  // Close the WS connection so server can clean up
+  try { if (ws) ws.close(); } catch(e) {}
+  ws = null;
+  wsConnected = false;
   roomId = ''; myId = ''; isHost = false; gs = null;
+  lastPushedTs = 0;
+  revealedHoles.clear();
   document.getElementById('winModal').style.display = 'none';
+  document.getElementById('chipModal').style.display = 'none';
+  document.getElementById('loanModal').style.display = 'none';
+  clearCountdown();
   show('homeScreen');
-};
+  // Reconnect for new room joining
+  setTimeout(function() { wasClean = false; connectWS(); }, 500);
+}
 
 // Lobby setting changes (host only)
 function onLobbySettingChange() {
@@ -2393,15 +2424,40 @@ document.getElementById('rulesBtn').onclick = () => document.getElementById('rul
 document.getElementById('closeRulesBtn').onclick = () => document.getElementById('rulesPanel').classList.remove('show');
 
 // Reconnect on tab visibility change
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    if (!wsConnected) {
-      clearTimeout(reconnectTimer);
-      connectWS();
-    } else if (roomId && myId && gs) {
-      wsSend({ type: 'join', roomId: roomId, playerId: myId });
-    }
+function ensureConnectionAndSync() {
+  if (!wsConnected || !ws || ws.readyState !== 1) {
+    clearTimeout(reconnectTimer);
+    connectWS();
+  } else if (roomId && myId && gs) {
+    // Re-join to get fresh state from server
+    wsSend({ type: 'join', roomId: roomId, playerId: myId });
   }
+}
+
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    ensureConnectionAndSync();
+  }
+});
+
+// iOS Safari bfcache restoration (also fires on first load)
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) {
+    // Restored from back-forward cache (e.g. after phone call)
+    toast('正在恢复连接...');
+    ensureConnectionAndSync();
+  }
+});
+
+// Catch network coming back
+window.addEventListener('online', function() {
+  toast('网络已恢复');
+  ensureConnectionAndSync();
+});
+
+// Catch focus
+window.addEventListener('focus', function() {
+  if (roomId && myId) ensureConnectionAndSync();
 });
 
 // ════════════════════════════════════════════════════════════════
