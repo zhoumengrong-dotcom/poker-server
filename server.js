@@ -124,6 +124,24 @@ wss.on('connection', (ws) => {
       if (!currentRoom) return;
       const room = rooms.get(currentRoom); if (!room) return;
 
+      // Reject stale states (race condition: client acted on outdated state)
+      // pot/street can only progress, not regress, within same round
+      if (room.state
+          && state.round === room.state.round
+          && state.phase === 'playing' && room.state.phase === 'playing') {
+        if ((state.street || 1) < (room.state.street || 1)) {
+          console.log('[stale] street regression', state.street, '<', room.state.street);
+          // Resend authoritative state to this client
+          try { ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(room.state, playerId) })); } catch(e) {}
+          return;
+        }
+        if ((state.street || 1) === (room.state.street || 1) && (state.pot || 0) < (room.state.pot || 0)) {
+          console.log('[stale] pot regression', state.pot, '<', room.state.pot);
+          try { ws.send(JSON.stringify({ type: 'state', state: stateForPlayer(room.state, playerId) })); } catch(e) {}
+          return;
+        }
+      }
+
       // Detect new round: round number incremented, or new game starts (phase change)
       const isNewRound = !room.state
         || (state.round && room.state.round && state.round > room.state.round)
